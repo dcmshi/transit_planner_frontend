@@ -2,6 +2,8 @@
 
 Web UI for the [GO Transit Reliability Router](https://github.com/dcmshi/transit_planner) backend. Surfaces reliability-first route planning for GO Transit buses between Toronto and Guelph — accounting for bus no-shows, service alerts, and risky transfers.
 
+![App screenshot](screenshot.png)
+
 ## Stack
 
 | Concern | Choice |
