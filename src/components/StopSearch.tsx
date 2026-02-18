@@ -58,7 +58,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           onChange={handleInputChange}
           onFocus={() => inputValue.trim().length >= 2 && setOpen(true)}
           placeholder={placeholder}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
           aria-autocomplete="list"
           aria-expanded={showDropdown}
         />
@@ -83,7 +83,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
               role="option"
               aria-selected={stop.stop_id === value?.stop_id}
               onPointerDown={() => handleSelect(stop)}
-              className="flex cursor-pointer flex-col px-3 py-2 text-sm text-gray-900 hover:bg-blue-50 aria-selected:bg-blue-100"
+              className="flex cursor-pointer flex-col px-3 py-2 text-sm text-gray-900 hover:bg-green-50 aria-selected:bg-green-100"
             >
               <span className="font-medium">{stop.stop_name}</span>
               {stop.routes_served.length > 0 && (

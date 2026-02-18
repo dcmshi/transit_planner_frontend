@@ -17,8 +17,8 @@
 - [x] `/health` check — fetch on load, show warning banner if `gtfs.graph_built === false`
 - [x] Stop search — debounced combobox (300ms) hitting `GET /stops?query=`
 - [x] Route form — origin/destination pickers + date + departure time inputs
-- [ ] Results list — risk badge (Low/Medium/High), total travel time, transfer count per route
-- [ ] Leg breakdown — trip legs with departure/arrival times, walk legs with distance
+- [x] Results list — risk badge (Low/Medium/High), total travel time, transfer count per route
+- [x] Leg breakdown — trip legs grouped by trip_id, walk legs with distance, expandable stops
 
 ---
 
