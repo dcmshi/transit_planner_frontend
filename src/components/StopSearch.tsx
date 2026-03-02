@@ -14,6 +14,7 @@ interface Props {
 export function StopSearch({ label, placeholder = "Search stops…", value, onChange }: Props) {
   const [inputValue, setInputValue] = useState(value?.stop_name ?? "");
   const [open, setOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { data: stops = [], isFetching } = useStops(inputValue);
@@ -34,6 +35,11 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
     setInputValue(value?.stop_name ?? "");
   }, [value]);
 
+  // Reset focused index when input changes or dropdown closes
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [inputValue]);
+
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setInputValue(e.target.value);
     setOpen(true);
@@ -44,6 +50,24 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
     onChange(stop);
     setInputValue(stop.stop_name);
     setOpen(false);
+    setFocusedIndex(-1);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showDropdown || stops.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIndex((i) => Math.min(i + 1, stops.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && focusedIndex >= 0) {
+      e.preventDefault();
+      handleSelect(stops[focusedIndex]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      setFocusedIndex(-1);
+    }
   }
 
   const showDropdown = open && inputValue.trim().length >= 2;
@@ -54,13 +78,16 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
       <div className="relative">
         <input
           type="text"
+          role="combobox"
           value={inputValue}
           onChange={handleInputChange}
           onFocus={() => inputValue.trim().length >= 2 && setOpen(true)}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
           aria-autocomplete="list"
           aria-expanded={showDropdown}
+          aria-activedescendant={focusedIndex >= 0 ? `stop-option-${focusedIndex}` : undefined}
         />
         {isFetching && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
@@ -77,13 +104,14 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           {stops.length === 0 && !isFetching && (
             <li className="px-3 py-2 text-sm text-gray-500">No stops found</li>
           )}
-          {stops.map((stop) => (
+          {stops.map((stop, index) => (
             <li
               key={stop.stop_id}
+              id={`stop-option-${index}`}
               role="option"
               aria-selected={stop.stop_id === value?.stop_id}
               onPointerDown={() => handleSelect(stop)}
-              className="flex cursor-pointer flex-col px-3 py-2 text-sm text-gray-900 hover:bg-green-50 aria-selected:bg-green-100"
+              className={"flex cursor-pointer flex-col px-3 py-2 text-sm text-gray-900 hover:bg-green-50 aria-selected:bg-green-100" + (focusedIndex === index ? " bg-green-50" : "")}
             >
               <span className="font-medium">{stop.stop_name}</span>
               {stop.routes_served.length > 0 && (
