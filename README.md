@@ -53,7 +53,7 @@ bun test              # run all tests once
 bun run test:watch    # watch mode
 ```
 
-56 tests across 9 files covering utility functions and all major components:
+72 tests across 12 files covering utility functions and all major components:
 
 | File | What it covers |
 |---|---|
@@ -63,9 +63,12 @@ bun run test:watch    # watch mode
 | `src/components/RiskBadge.test.tsx` | colour class per risk level |
 | `src/components/ExplanationPanel.test.tsx` | available vs. Ollama-unavailable states |
 | `src/components/HealthBanner.test.tsx` | all 5 health/data states |
-| `src/components/StopSearch.test.tsx` | dropdown threshold, selection, clear |
+| `src/components/StopSearch.test.tsx` | dropdown threshold, keyboard nav, selection, clear |
+| `src/components/LoadingRoutes.test.tsx` | spinner and loading text |
+| `src/components/RouteForm.test.tsx` | render, submit gating, payload shape, explain flag, stop persistence |
 | `src/components/RouteList.test.tsx` | empty state, route count, explanation panel |
 | `src/components/RouteCard.test.tsx` | summary row, expand/collapse, recommended flag |
+| `src/hooks/useRoutePolyline.test.ts` | GeoJSON output, coord resolution, missing-coord skip, leg properties |
 
 ## Project structure
 
@@ -109,3 +112,9 @@ src/
 - Trip legs coloured by risk (green / amber / red); walk legs dashed grey
 - Intermediate transfer stop coordinates resolved on demand via `GET /stops` (cached)
 - Blue ring highlights the selected card; green ring reserved for the recommended route
+
+**v5 — Quality & accessibility**
+- Date picker defaults to today's local date (fixed UTC off-by-one) and blocks past dates
+- Stop search: keyboard navigation (↑ ↓ navigate, Enter selects, Escape closes), `role="combobox"`, `aria-activedescendant`
+- Error boundary in root layout — unhandled render errors show a reload prompt instead of a blank page
+- Last-used origin and destination persisted in `localStorage` and restored on next visit

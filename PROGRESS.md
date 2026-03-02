@@ -56,37 +56,29 @@
 
 ---
 
----
-
-## Backlog
+## v5 — Quality & Accessibility
 
 ### Bug fixes
-
-- [ ] **`todayDate()` uses UTC date** (`RouteForm.tsx`) — `new Date().toISOString().slice(0, 10)` returns the UTC date; in EST after 7 pm it defaults to tomorrow. Fix: `new Date().toLocaleDateString('en-CA')` (returns `YYYY-MM-DD` in local time)
-- [ ] **`package.json` name is `"scaffold-tmp"`** — rename to `"go-transit-reliability-router"`
-- [ ] **Unused `TripLeg` import** (`RouteCard.tsx` line 4) — `TripLeg` is imported but never referenced; remove it
+- [x] **`todayDate()` uses UTC date** — fixed with `new Date().toLocaleDateString('en-CA')`
+- [x] **`package.json` name was `"scaffold-tmp"`** — renamed to `"go-transit-reliability-router"`
+- [x] **Unused `TripLeg` import** in `RouteCard.tsx` — removed
 
 ### Accessibility
-
-- [ ] **StopSearch keyboard navigation** (`StopSearch.tsx`) — dropdown has no `keydown` handlers; users cannot navigate with ArrowUp / ArrowDown, confirm with Enter, or dismiss with Escape. The `listbox` + `option` ARIA roles are already correct — just needs key event wiring
-- [ ] **Missing `role="combobox"`** (`StopSearch.tsx`) — `aria-expanded` is only valid on the `combobox` role but the `<input>` has no explicit role (implicit `textbox` does not support `aria-expanded`). Fix: add `role="combobox"` to the `<input>` alongside the existing `aria-autocomplete="list"`
+- [x] **`role="combobox"`** added to `StopSearch` input — `aria-expanded` now valid
+- [x] **Keyboard navigation** in `StopSearch` — ArrowUp/Down navigate list, Enter selects, Escape closes; `aria-activedescendant` tracks focused option
 
 ### Test coverage
-
-- [ ] **`RouteForm` has no tests** — highest-value gap; should cover: default date/time initialisation, submit blocked when stops are null, `onSubmit` payload shape, `onStopsChange` callback, explain checkbox toggle
-- [ ] **`LoadingRoutes` has no tests** — add a basic render test
-- [ ] **`useRoutePolyline` has no tests** — complex GeoJSON-building logic; should cover: known coords used for origin/destination, intermediate stops resolved from fetched data, legs with missing coords skipped, correct `kind` and `riskLabel` properties on features
-- [ ] **No hook-level tests at all** (`useRoutes`, `useHealth`, `useStops`) — consider at minimum smoke tests verifying query keys, `staleTime`, and `enabled` conditions
-
-### Code quality / tech debt
-
-- [ ] **`as any` in test mocks** (`HealthBanner.test.tsx`, `StopSearch.test.tsx`) — replace with `{ data: ..., isError: ..., isPending: ... } satisfies Partial<ReturnType<typeof useHealth>>` (or equivalent) to get type-checked mocks without casting
-- [ ] **Date input has no `min` attribute** (`RouteForm.tsx` line 80) — nothing prevents selecting a date in the past; add `min={todayDate()}` to the date `<input>`
+- [x] **`RouteForm` tests** (7) — render, submit gating, payload shape, explain flag, `onStopsChange`, local date default
+- [x] **`LoadingRoutes` tests** (2) — spinner and loading text
+- [x] **`useRoutePolyline` tests** (7) — GeoJSON output, coord resolution, missing-coord skip, leg kind/riskLabel
+- [x] **`as any` casts** in `HealthBanner.test.tsx` and `StopSearch.test.tsx` replaced with `ReturnType<typeof hook>`
+- [x] **Date `min` attribute** added to date input to prevent past-date selection
 
 ### Features
+- [x] **Error boundary** — `<ErrorBoundary>` wraps all children in `layout.tsx`; shows a reload prompt on unhandled render errors
+- [x] **Persist last stops** — origin and destination persisted in `localStorage` under `"go-transit-last-stops"` and restored on next visit
 
-- [ ] **Error boundary** — no `<ErrorBoundary>` in `layout.tsx`; an unhandled render error anywhere in the tree currently produces a blank page with no recovery path
-- [ ] **Persist last query** — store the last-used origin, destination, date and time in `localStorage` and restore them on next visit; reduces friction for commuters who run the same journey daily
+**Test total: 72 across 12 files**
 
 ---
 
