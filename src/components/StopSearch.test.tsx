@@ -16,6 +16,14 @@ const fakeStop: StopResult = {
   routes_served: ["31", "40"],
 };
 
+const fakeStop2: StopResult = {
+  stop_id: "ST002",
+  stop_name: "Guelph Stone Road",
+  lat: 43.52,
+  lon: -80.21,
+  routes_served: ["57"],
+};
+
 beforeEach(() => {
   mockUseStops.mockReturnValue({ data: [], isFetching: false } as ReturnType<typeof useStops>);
 });
@@ -69,5 +77,60 @@ describe("StopSearch", () => {
     render(<StopSearch label="Origin" value={fakeStop} onChange={onChange} />);
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "" } });
     expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  describe("keyboard navigation", () => {
+    function openDropdown() {
+      mockUseStops.mockReturnValue({ data: [fakeStop, fakeStop2], isFetching: false } as ReturnType<typeof useStops>);
+      render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
+    }
+
+    it("ArrowDown sets aria-activedescendant to the first option", () => {
+      openDropdown();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-0");
+    });
+
+    it("ArrowDown twice advances to the second option", () => {
+      openDropdown();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-1");
+    });
+
+    it("ArrowDown does not advance past the last option", () => {
+      openDropdown();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-1");
+    });
+
+    it("ArrowUp does not go below the first option", () => {
+      openDropdown();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowUp" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowUp" });
+      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-0");
+    });
+
+    it("Enter selects the focused option and calls onChange", () => {
+      const onChange = vi.fn();
+      mockUseStops.mockReturnValue({ data: [fakeStop, fakeStop2], isFetching: false } as ReturnType<typeof useStops>);
+      render(<StopSearch label="Origin" value={null} onChange={onChange} />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
+      expect(onChange).toHaveBeenCalledWith(fakeStop2);
+    });
+
+    it("Escape closes the dropdown", () => {
+      openDropdown();
+      expect(screen.getByRole("listbox")).toBeInTheDocument();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    });
   });
 });

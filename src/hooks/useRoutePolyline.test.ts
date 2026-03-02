@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, type UseQueryResult } from "@tanstack/react-query";
 import { useRoutePolyline } from "./useRoutePolyline";
 import type { ScoredRoute, StopResult, WalkLeg, TripLeg } from "@/lib/api";
+
+type StopQueryResult = UseQueryResult<StopResult | null>;
+function q(partial: Partial<StopQueryResult>): StopQueryResult {
+  return partial as unknown as StopQueryResult;
+}
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
@@ -81,7 +86,7 @@ describe("useRoutePolyline", () => {
 
   it("returns null while a query is pending", () => {
     const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
-    mockUseQueries.mockReturnValue([{ isPending: true, data: undefined } as any]);
+    mockUseQueries.mockReturnValue([q({ isPending: true, data: undefined })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
     expect(result.current).toBeNull();
   });
@@ -109,7 +114,7 @@ describe("useRoutePolyline", () => {
       makeTripLeg("S1", "Origin Stop", "S3", "Mid Stop"),
       makeTripLeg("S3", "Mid Stop", "S2", "Dest Stop"),
     ]);
-    mockUseQueries.mockReturnValue([{ isPending: false, data: midStop } as any]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: midStop })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
     expect(result.current).not.toBeNull();
     expect(result.current?.features).toHaveLength(2);
@@ -120,7 +125,7 @@ describe("useRoutePolyline", () => {
       makeWalkLeg("S1", "Origin Stop", "S_UNKNOWN", "Unknown Stop"),
       makeWalkLeg("S_UNKNOWN", "Unknown Stop", "S2", "Dest Stop"),
     ]);
-    mockUseQueries.mockReturnValue([{ isPending: false, data: null } as any]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: null })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
     // Both legs involve S_UNKNOWN which has no coord, so they are skipped
     expect(result.current?.features).toHaveLength(0);
@@ -132,7 +137,7 @@ describe("useRoutePolyline", () => {
       makeTripLeg("S1", "Origin Stop", "S3", "Mid Stop", "High"),
       makeWalkLeg("S3", "Mid Stop", "S2", "Dest Stop"),
     ]);
-    mockUseQueries.mockReturnValue([{ isPending: false, data: midStop } as any]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: midStop })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
     const features = result.current?.features ?? [];
     const tripFeature = features.find((f) => f.properties.kind === "trip");

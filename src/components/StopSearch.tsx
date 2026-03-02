@@ -87,6 +87,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
           aria-autocomplete="list"
           aria-expanded={showDropdown}
+          aria-controls="stop-listbox"
           aria-activedescendant={focusedIndex >= 0 ? `stop-option-${focusedIndex}` : undefined}
         />
         {isFetching && (
@@ -98,6 +99,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
 
       {showDropdown && (
         <ul
+          id="stop-listbox"
           role="listbox"
           className="absolute top-full z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
         >
