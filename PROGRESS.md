@@ -22,9 +22,21 @@
 
 ---
 
-## Out of Scope (v1)
+## v2 — Map
 
-- Maps / stop markers (v2, MapLibre GL JS)
+- [x] Install `maplibre-gl` (v5)
+- [x] `RouteMap` component — MapLibre map with OpenFreeMap liberty tiles (no API key)
+- [x] Green origin marker / red destination marker; updates reactively on stop selection
+- [x] `fitBounds` when both stops set; `flyTo` when only one stop set
+- [x] Side-by-side layout: form+results left, sticky map right (480 px tall)
+- [x] Stacks vertically on viewports narrower than `lg` breakpoint
+- [x] Layout widened to `max-w-5xl`; dynamic import with `ssr: false`
+
+---
+
+## Out of Scope (future)
+
+- Route polylines on map
 - Real-time auto-refresh
 - User accounts / saved journeys
 - TTC integration

@@ -24,14 +24,25 @@ export interface RouteQuery {
 interface Props {
   onSubmit: (query: RouteQuery) => void;
   isLoading?: boolean;
+  onStopsChange?: (origin: StopResult | null, destination: StopResult | null) => void;
 }
 
-export function RouteForm({ onSubmit, isLoading = false }: Props) {
+export function RouteForm({ onSubmit, isLoading = false, onStopsChange }: Props) {
   const [origin, setOrigin] = useState<StopResult | null>(null);
   const [destination, setDestination] = useState<StopResult | null>(null);
   const [date, setDate] = useState(todayDate());
   const [time, setTime] = useState(nowTime());
   const [explain, setExplain] = useState(false);
+
+  function handleOriginChange(stop: StopResult | null) {
+    setOrigin(stop);
+    onStopsChange?.(stop, destination);
+  }
+
+  function handleDestinationChange(stop: StopResult | null) {
+    setDestination(stop);
+    onStopsChange?.(origin, stop);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,13 +65,13 @@ export function RouteForm({ onSubmit, isLoading = false }: Props) {
           label="Origin"
           placeholder="Search origin stop…"
           value={origin}
-          onChange={setOrigin}
+          onChange={handleOriginChange}
         />
         <StopSearch
           label="Destination"
           placeholder="Search destination stop…"
           value={destination}
-          onChange={setDestination}
+          onChange={handleDestinationChange}
         />
 
         <div className="flex gap-3">

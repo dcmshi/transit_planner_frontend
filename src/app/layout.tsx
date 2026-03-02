@@ -32,7 +32,7 @@ export default function RootLayout({
         <Providers>
           <HealthBanner />
           <header className="bg-green-700 text-white shadow-md">
-            <div className="mx-auto max-w-2xl px-4 py-4 flex items-center gap-3">
+            <div className="mx-auto max-w-5xl px-4 py-4 flex items-center gap-3">
               <span className="text-xl font-bold tracking-tight">GO</span>
               <span className="h-5 w-px bg-green-500" />
               <span className="text-sm font-medium text-green-100">
@@ -40,7 +40,7 @@ export default function RootLayout({
               </span>
             </div>
           </header>
-          <div className="mx-auto max-w-2xl px-4 py-8">
+          <div className="mx-auto max-w-5xl px-4 py-8">
             {children}
           </div>
         </Providers>
