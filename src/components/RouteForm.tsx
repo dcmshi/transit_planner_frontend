@@ -5,7 +5,7 @@ import { StopSearch } from "@/components/StopSearch";
 import type { StopResult } from "@/lib/api";
 
 function todayDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function nowTime(): string {
@@ -25,11 +25,13 @@ interface Props {
   onSubmit: (query: RouteQuery) => void;
   isLoading?: boolean;
   onStopsChange?: (origin: StopResult | null, destination: StopResult | null) => void;
+  defaultOrigin?: StopResult | null;
+  defaultDestination?: StopResult | null;
 }
 
-export function RouteForm({ onSubmit, isLoading = false, onStopsChange }: Props) {
-  const [origin, setOrigin] = useState<StopResult | null>(null);
-  const [destination, setDestination] = useState<StopResult | null>(null);
+export function RouteForm({ onSubmit, isLoading = false, onStopsChange, defaultOrigin, defaultDestination }: Props) {
+  const [origin, setOrigin] = useState<StopResult | null>(defaultOrigin ?? null);
+  const [destination, setDestination] = useState<StopResult | null>(defaultDestination ?? null);
   const [date, setDate] = useState(todayDate());
   const [time, setTime] = useState(nowTime());
   const [explain, setExplain] = useState(false);
@@ -80,6 +82,7 @@ export function RouteForm({ onSubmit, isLoading = false, onStopsChange }: Props)
             <input
               type="date"
               value={date}
+              min={todayDate()}
               onChange={(e) => setDate(e.target.value)}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
             />

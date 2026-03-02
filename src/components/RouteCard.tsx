@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ScoredRoute, TripLeg, WalkLeg } from "@/lib/api";
+import type { ScoredRoute, WalkLeg } from "@/lib/api";
 import { groupLegs, type TripLegGroup } from "@/lib/groupLegs";
 import { RiskBadge } from "./RiskBadge";
 import { formatDuration, formatGtfsTime, formatDistance } from "@/lib/format";
