@@ -44,8 +44,6 @@
 
 ---
 
----
-
 ## v4 — Route Polylines
 
 - [x] `useRoutePolyline` hook — resolves coordinates for all leg stops; origin/destination from existing state; intermediate stops fetched via `GET /stops?query=name` matched by `stop_id`, cached with `staleTime: Infinity`
