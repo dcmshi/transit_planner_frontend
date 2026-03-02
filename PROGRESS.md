@@ -34,9 +34,18 @@
 
 ---
 
+## v3 — Auto-Refresh
+
+- [x] `refetchInterval: 5 min` on `useRoutes` — background refetch while results are shown
+- [x] `refetchOnWindowFocus: true` — silent refresh when user returns to the tab
+- [x] Separate `isInitialLoading` vs `isRefreshing` states — results stay visible during background refetch
+- [x] "Updated at HH:MM" timestamp in route list header
+- [x] Spinning refresh button — disabled + animated while refetching
+
+---
+
 ## Out of Scope (future)
 
 - Route polylines on map
-- Real-time auto-refresh
 - User accounts / saved journeys
 - TTC integration

@@ -19,7 +19,7 @@ export default function Home() {
     origin: StopResult | null;
     destination: StopResult | null;
   }>({ origin: null, destination: null });
-  const { data, isFetching, isError } = useRoutes(query);
+  const { data, isFetching, isError, refetch, dataUpdatedAt } = useRoutes(query);
 
   return (
     <div className="flex flex-col lg:flex-row lg:gap-6 lg:items-start">
@@ -36,11 +36,24 @@ export default function Home() {
           </p>
         )}
 
-        {isFetching && <LoadingRoutes />}
-
-        {!isFetching && data && (
-          <RouteList routes={data.routes} explanation={data.explanation ?? undefined} />
-        )}
+        {(() => {
+          const isInitialLoading = isFetching && !data;
+          const isRefreshing = isFetching && !!data;
+          return (
+            <>
+              {isInitialLoading && <LoadingRoutes />}
+              {data && (
+                <RouteList
+                  routes={data.routes}
+                  explanation={data.explanation ?? undefined}
+                  onRefresh={refetch}
+                  dataUpdatedAt={dataUpdatedAt}
+                  isRefreshing={isRefreshing}
+                />
+              )}
+            </>
+          );
+        })()}
       </div>
 
       <div className="lg:w-[420px] lg:sticky lg:top-6 lg:self-start">

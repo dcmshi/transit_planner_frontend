@@ -96,3 +96,9 @@ src/
 - Green origin marker and red destination marker update as stops are selected
 - Map fits both stops in view; pans to a single stop when only one is selected
 - Stacks vertically on narrow viewports
+
+**v3 — Auto-refresh**
+- Results silently re-fetch every 5 minutes while the page is open
+- Returning to the tab triggers an immediate background refresh
+- Route list stays visible during background fetches (no flash of loading state)
+- "Updated at HH:MM" timestamp and a spinning refresh button in the results header

@@ -17,6 +17,8 @@ export function useRoutes(params: RouteParams | null) {
     queryFn: () => api.routes(params!),
     enabled: params !== null,
     staleTime: 60 * 60 * 1000, // 1 hr — matches backend cache TTL
+    refetchInterval: 5 * 60 * 1000, // re-fetch every 5 min while results are shown
+    refetchOnWindowFocus: true,      // silent refresh when user returns to tab
     retry: 1,
   });
 }
