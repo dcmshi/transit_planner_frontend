@@ -14,6 +14,7 @@ Web UI for the [GO Transit Reliability Router](https://github.com/dcmshi/transit
 | Styling | Tailwind CSS |
 | Data fetching | TanStack Query v5 |
 | Type generation | openapi-typescript |
+| Map | MapLibre GL JS + OpenFreeMap tiles |
 | Testing | Vitest + Testing Library (jsdom) |
 
 ## Prerequisites
@@ -79,8 +80,9 @@ src/
   test/             # Vitest setup file
 ```
 
-## Features (v1)
+## Features
 
+**v1 — Core UI**
 - Stop search with 300 ms debounce
 - Date and departure time picker (defaults to today / now)
 - Route results with Low / Medium / High risk badges
@@ -89,4 +91,8 @@ src/
 - Optional AI explanation via Ollama (`?explain=true`)
 - Health banner when the backend graph is building or reliability data is missing
 
-Maps and real-time refresh are planned for v2.
+**v2 — Map**
+- Side-by-side layout: form + results on the left, sticky map on the right
+- Green origin marker and red destination marker update as stops are selected
+- Map fits both stops in view; pans to a single stop when only one is selected
+- Stacks vertically on narrow viewports
