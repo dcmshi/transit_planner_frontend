@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+
 import { LoadingRoutes } from "./LoadingRoutes";
 
 describe("LoadingRoutes", () => {
-  it("renders a spinner", () => {
-    const { container } = render(<LoadingRoutes />);
-    const spinner = container.querySelector(".animate-spin");
-    expect(spinner).toBeInTheDocument();
+  it("renders a status region with a spinner", () => {
+    render(<LoadingRoutes />);
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByRole("status").querySelector(".animate-spin")).toBeInTheDocument();
   });
 
   it("renders loading text", () => {
