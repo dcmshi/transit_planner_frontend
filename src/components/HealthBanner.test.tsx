@@ -22,7 +22,7 @@ describe("HealthBanner", () => {
       data: healthyData,
       isError: false,
       isPending: false,
-    } as any);
+    } as ReturnType<typeof useHealth>);
     const { container } = render(<HealthBanner />);
     expect(container).toBeEmptyDOMElement();
   });
@@ -32,7 +32,7 @@ describe("HealthBanner", () => {
       data: undefined,
       isError: false,
       isPending: true,
-    } as any);
+    } as ReturnType<typeof useHealth>);
     const { container } = render(<HealthBanner />);
     expect(container).toBeEmptyDOMElement();
   });
@@ -42,7 +42,7 @@ describe("HealthBanner", () => {
       data: undefined,
       isError: true,
       isPending: false,
-    } as any);
+    } as ReturnType<typeof useHealth>);
     render(<HealthBanner />);
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.getByText(/Cannot reach the backend/i)).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe("HealthBanner", () => {
       },
       isError: false,
       isPending: false,
-    } as any);
+    } as ReturnType<typeof useHealth>);
     render(<HealthBanner />);
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.getByText(/GTFS graph is still building/i)).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe("HealthBanner", () => {
       },
       isError: false,
       isPending: false,
-    } as any);
+    } as ReturnType<typeof useHealth>);
     render(<HealthBanner />);
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.getByText(/Reliability data not yet seeded/i)).toBeInTheDocument();

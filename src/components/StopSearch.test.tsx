@@ -17,49 +17,49 @@ const fakeStop: StopResult = {
 };
 
 beforeEach(() => {
-  mockUseStops.mockReturnValue({ data: [], isFetching: false } as any);
+  mockUseStops.mockReturnValue({ data: [], isFetching: false } as ReturnType<typeof useStops>);
 });
 
 describe("StopSearch", () => {
   it("renders the label and text input", () => {
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
     expect(screen.getByText("Origin")).toBeInTheDocument();
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
   });
 
   it("does not show the dropdown when input is fewer than 2 characters", () => {
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "G" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "G" } });
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
   it("shows the dropdown with results when input is 2 or more characters", () => {
-    mockUseStops.mockReturnValue({ data: [fakeStop], isFetching: false } as any);
+    mockUseStops.mockReturnValue({ data: [fakeStop], isFetching: false } as ReturnType<typeof useStops>);
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Gu" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
     expect(screen.getByRole("listbox")).toBeInTheDocument();
     expect(screen.getByText("Guelph Central Station")).toBeInTheDocument();
   });
 
   it("shows served route numbers in the dropdown", () => {
-    mockUseStops.mockReturnValue({ data: [fakeStop], isFetching: false } as any);
+    mockUseStops.mockReturnValue({ data: [fakeStop], isFetching: false } as ReturnType<typeof useStops>);
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Gu" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
     expect(screen.getByText(/31, 40/)).toBeInTheDocument();
   });
 
   it("shows 'No stops found' when results are empty and not fetching", () => {
-    mockUseStops.mockReturnValue({ data: [], isFetching: false } as any);
+    mockUseStops.mockReturnValue({ data: [], isFetching: false } as ReturnType<typeof useStops>);
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Gu" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
     expect(screen.getByText("No stops found")).toBeInTheDocument();
   });
 
   it("calls onChange with the stop when a result is selected", () => {
-    mockUseStops.mockReturnValue({ data: [fakeStop], isFetching: false } as any);
+    mockUseStops.mockReturnValue({ data: [fakeStop], isFetching: false } as ReturnType<typeof useStops>);
     const onChange = vi.fn();
     render(<StopSearch label="Origin" value={null} onChange={onChange} />);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Gu" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
     fireEvent.pointerDown(screen.getByText("Guelph Central Station"));
     expect(onChange).toHaveBeenCalledWith(fakeStop);
   });
@@ -67,7 +67,7 @@ describe("StopSearch", () => {
   it("calls onChange with null when the input is cleared", () => {
     const onChange = vi.fn();
     render(<StopSearch label="Origin" value={fakeStop} onChange={onChange} />);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "" } });
     expect(onChange).toHaveBeenCalledWith(null);
   });
 });
