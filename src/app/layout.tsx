@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { HealthBanner } from "@/components/HealthBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,19 +31,21 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <HealthBanner />
-          <header className="bg-green-700 text-white shadow-md">
-            <div className="mx-auto max-w-5xl px-4 py-4 flex items-center gap-3">
-              <span className="text-xl font-bold tracking-tight">GO</span>
-              <span className="h-5 w-px bg-green-500" />
-              <span className="text-sm font-medium text-green-100">
-                Reliability Router
-              </span>
+          <ErrorBoundary>
+            <HealthBanner />
+            <header className="bg-green-700 text-white shadow-md">
+              <div className="mx-auto max-w-5xl px-4 py-4 flex items-center gap-3">
+                <span className="text-xl font-bold tracking-tight">GO</span>
+                <span className="h-5 w-px bg-green-500" />
+                <span className="text-sm font-medium text-green-100">
+                  Reliability Router
+                </span>
+              </div>
+            </header>
+            <div className="mx-auto max-w-5xl px-4 py-8">
+              {children}
             </div>
-          </header>
-          <div className="mx-auto max-w-5xl px-4 py-8">
-            {children}
-          </div>
+          </ErrorBoundary>
         </Providers>
       </body>
     </html>
