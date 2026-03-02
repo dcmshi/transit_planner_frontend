@@ -9,9 +9,11 @@ interface Props {
   onRefresh?: () => void;
   dataUpdatedAt?: number;
   isRefreshing?: boolean;
+  selectedRouteIndex?: number | null;
+  onSelectRoute?: (index: number) => void;
 }
 
-export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRefreshing }: Props) {
+export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRefreshing, selectedRouteIndex, onSelectRoute }: Props) {
   if (routes.length === 0) {
     return (
       <div className="mt-8 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
@@ -67,6 +69,8 @@ export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRef
           route={route}
           index={i + 1}
           recommended={i === recommendedIndex}
+          isSelected={i === selectedRouteIndex}
+          onSelect={() => onSelectRoute?.(i)}
         />
       ))}
     </div>

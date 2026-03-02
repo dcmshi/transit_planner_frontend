@@ -10,14 +10,22 @@ interface Props {
   route: ScoredRoute;
   index: number;
   recommended?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
-export function RouteCard({ route, index, recommended = false }: Props) {
+export function RouteCard({ route, index, recommended = false, isSelected, onSelect }: Props) {
   const [expanded, setExpanded] = useState(false);
   const groups = groupLegs(route.legs);
 
+  const borderClass = recommended
+    ? "border-green-400 ring-1 ring-green-400"
+    : isSelected
+    ? "border-blue-400 ring-1 ring-blue-400"
+    : "border-gray-200";
+
   return (
-    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden ${recommended ? "border-green-400 ring-1 ring-green-400" : "border-gray-200"}`}>
+    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden ${borderClass}`}>
       {recommended && (
         <div className="bg-green-600 px-5 py-1 text-xs font-semibold text-white">
           Recommended
@@ -25,7 +33,7 @@ export function RouteCard({ route, index, recommended = false }: Props) {
       )}
       {/* Summary row */}
       <button
-        onClick={() => setExpanded((v) => !v)}
+        onClick={() => { onSelect?.(); setExpanded((v) => !v); }}
         className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">

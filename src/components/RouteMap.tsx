@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { StopResult } from "@/lib/api";
+import type { ScoredRoute, StopResult } from "@/lib/api";
+import { useRoutePolyline } from "@/hooks/useRoutePolyline";
 
 interface Props {
   origin: StopResult | null;
   destination: StopResult | null;
+  selectedRoute?: ScoredRoute | null;
 }
 
-export function RouteMap({ origin, destination }: Props) {
+export function RouteMap({ origin, destination, selectedRoute }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  const geojson = useRoutePolyline(selectedRoute ?? null, origin, destination);
 
   // Initialise map on mount
   useEffect(() => {
@@ -25,11 +30,53 @@ export function RouteMap({ origin, destination }: Props) {
       zoom: 9,
     });
     mapRef.current = map;
+
+    map.on("load", () => {
+      map.addSource("route-polyline", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "route-trip",
+        type: "line",
+        source: "route-polyline",
+        filter: ["==", ["get", "kind"], "trip"],
+        paint: {
+          "line-color": ["match", ["get", "riskLabel"],
+            "High", "#dc2626", "Medium", "#d97706", "#16a34a"],
+          "line-width": 4,
+          "line-opacity": 0.85,
+        },
+      });
+      map.addLayer({
+        id: "route-walk",
+        type: "line",
+        source: "route-polyline",
+        filter: ["==", ["get", "kind"], "walk"],
+        paint: {
+          "line-color": "#6b7280",
+          "line-width": 2,
+          "line-dasharray": [2, 2],
+        },
+      });
+      setMapLoaded(true);
+    });
+
     return () => {
       map.remove();
       mapRef.current = null;
+      setMapLoaded(false);
     };
   }, []);
+
+  // Update polyline source when GeoJSON changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+    const source = map.getSource("route-polyline") as maplibregl.GeoJSONSource | undefined;
+    if (!source) return;
+    source.setData(geojson ?? { type: "FeatureCollection", features: [] });
+  }, [geojson, mapLoaded]);
 
   // React to origin/destination changes
   useEffect(() => {

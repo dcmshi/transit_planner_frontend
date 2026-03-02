@@ -44,8 +44,21 @@
 
 ---
 
+---
+
+## v4 — Route Polylines
+
+- [x] `useRoutePolyline` hook — resolves coordinates for all leg stops; origin/destination from existing state; intermediate stops fetched via `GET /stops?query=name` matched by `stop_id`, cached with `staleTime: Infinity`
+- [x] GeoJSON source (`route-polyline`) + two line layers added to map on load
+- [x] Trip legs drawn as solid coloured lines (green/amber/red by risk); walk legs as dashed grey
+- [x] Route selection state in `page.tsx` — first route auto-selected; resets on new query
+- [x] `RouteCard` — blue ring on selected card; `onSelect` fires on header click
+- [x] `RouteList` — forwards `selectedRouteIndex` + `onSelectRoute` to each card
+- [x] All new props optional — 56/56 existing tests pass
+
+---
+
 ## Out of Scope (future)
 
-- Route polylines on map
 - User accounts / saved journeys
 - TTC integration

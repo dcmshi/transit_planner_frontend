@@ -73,7 +73,7 @@ bun run test:watch    # watch mode
 src/
   app/              # Next.js App Router pages and layout
   components/       # UI components (RouteCard, StopSearch, HealthBanner, …)
-  hooks/            # TanStack Query hooks (useRoutes, useStops, useHealth)
+  hooks/            # TanStack Query hooks (useRoutes, useStops, useHealth, useRoutePolyline)
   lib/              # Pure utility functions and API client
   types/
     api.ts          # Auto-generated from backend OpenAPI schema — do not edit
@@ -102,3 +102,10 @@ src/
 - Returning to the tab triggers an immediate background refresh
 - Route list stays visible during background fetches (no flash of loading state)
 - "Updated at HH:MM" timestamp and a spinning refresh button in the results header
+
+**v4 — Route polylines**
+- Clicking a route card selects it; the first route is auto-selected on load
+- Selected route's legs are drawn on the map as straight-line polylines
+- Trip legs coloured by risk (green / amber / red); walk legs dashed grey
+- Intermediate transfer stop coordinates resolved on demand via `GET /stops` (cached)
+- Blue ring highlights the selected card; green ring reserved for the recommended route

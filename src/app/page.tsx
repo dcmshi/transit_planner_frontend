@@ -19,13 +19,22 @@ export default function Home() {
     origin: StopResult | null;
     destination: StopResult | null;
   }>({ origin: null, destination: null });
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | null>(null);
   const { data, isFetching, isError, refetch, dataUpdatedAt } = useRoutes(query);
+
+  const handleSubmit = (q: RouteQuery) => {
+    setQuery(q);
+    setSelectedRouteIndex(null);
+  };
+
+  const effectiveSelectedIndex = selectedRouteIndex ?? (data ? 0 : null);
+  const selectedRoute = data?.routes[effectiveSelectedIndex ?? 0] ?? null;
 
   return (
     <div className="flex flex-col lg:flex-row lg:gap-6 lg:items-start">
       <div className="flex-1 min-w-0 flex flex-col gap-6">
         <RouteForm
-          onSubmit={setQuery}
+          onSubmit={handleSubmit}
           isLoading={isFetching}
           onStopsChange={(origin, destination) => setMapStops({ origin, destination })}
         />
@@ -49,6 +58,8 @@ export default function Home() {
                   onRefresh={refetch}
                   dataUpdatedAt={dataUpdatedAt}
                   isRefreshing={isRefreshing}
+                  selectedRouteIndex={effectiveSelectedIndex}
+                  onSelectRoute={setSelectedRouteIndex}
                 />
               )}
             </>
@@ -57,7 +68,11 @@ export default function Home() {
       </div>
 
       <div className="lg:w-[420px] lg:sticky lg:top-6 lg:self-start">
-        <RouteMap origin={mapStops.origin} destination={mapStops.destination} />
+        <RouteMap
+          origin={mapStops.origin}
+          destination={mapStops.destination}
+          selectedRoute={selectedRoute}
+        />
       </div>
     </div>
   );
