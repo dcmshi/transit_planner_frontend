@@ -1,13 +1,36 @@
 import { useQueries } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { api } from "@/lib/api";
 import type { ScoredRoute, StopResult } from "@/lib/api";
+
+type GeoJSON = ReturnType<typeof buildFeatureCollection>;
+function buildFeatureCollection(
+  route: ScoredRoute,
+  allCoords: Record<string, [number, number]>,
+) {
+  const features = route.legs.flatMap((leg) => {
+    const from = allCoords[leg.from_stop_id];
+    const to   = allCoords[leg.to_stop_id];
+    if (!from || !to) return [];
+    return [{
+      type: "Feature" as const,
+      properties: {
+        kind:      leg.kind,
+        riskLabel: leg.kind === "trip" ? (leg.risk?.risk_label ?? "Low") : null,
+      },
+      geometry: { type: "LineString" as const, coordinates: [from, to] },
+    }];
+  });
+  return { type: "FeatureCollection" as const, features };
+}
 
 export function useRoutePolyline(
   route: ScoredRoute | null,
   origin: StopResult | null,
   destination: StopResult | null,
 ) {
+  const lastGeojson = useRef<GeoJSON | null>(null);
+
   // Known coordinates from the stop-search selections
   const knownCoords: Record<string, [number, number]> = {};
   if (origin)      knownCoords[origin.stop_id]      = [origin.lon, origin.lat];
@@ -37,9 +60,16 @@ export function useRoutePolyline(
     })),
   });
 
-  // Wait for all fetches to settle before rendering
+  // If route cleared, reset the cached value and clear the map
+  if (!route) {
+    lastGeojson.current = null;
+    return null;
+  }
+
+  // While intermediate stop queries are in-flight, show the previous polyline
+  // so the map doesn't flash empty between route selections
   const allSettled = queries.every((q) => !q.isPending);
-  if (!route || !allSettled) return null;
+  if (!allSettled) return lastGeojson.current;
 
   // Merge fetched coords into lookup
   const allCoords: Record<string, [number, number]> = { ...knownCoords };
@@ -49,19 +79,7 @@ export function useRoutePolyline(
   });
 
   // Build GeoJSON — legs with missing coords are skipped gracefully
-  const features = route.legs.flatMap((leg) => {
-    const from = allCoords[leg.from_stop_id];
-    const to   = allCoords[leg.to_stop_id];
-    if (!from || !to) return [];
-    return [{
-      type: "Feature" as const,
-      properties: {
-        kind:      leg.kind,
-        riskLabel: leg.kind === "trip" ? (leg.risk?.risk_label ?? "Low") : null,
-      },
-      geometry: { type: "LineString" as const, coordinates: [from, to] },
-    }];
-  });
-
-  return { type: "FeatureCollection" as const, features };
+  const geojson = buildFeatureCollection(route, allCoords);
+  lastGeojson.current = geojson;
+  return geojson;
 }
