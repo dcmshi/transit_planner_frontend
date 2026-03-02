@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { RouteForm, type RouteQuery } from "@/components/RouteForm";
 import { RouteList } from "@/components/RouteList";
@@ -13,12 +13,29 @@ const RouteMap = dynamic(
   { ssr: false }
 );
 
+const STORAGE_KEY = "go-transit-last-stops";
+
 export default function Home() {
   const [query, setQuery] = useState<RouteQuery | null>(null);
+
+  const [savedStops] = useState<{ origin: StopResult | null; destination: StopResult | null }>(() => {
+    if (typeof window === "undefined") return { origin: null, destination: null };
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : { origin: null, destination: null };
+    } catch {
+      return { origin: null, destination: null };
+    }
+  });
+
   const [mapStops, setMapStops] = useState<{
     origin: StopResult | null;
     destination: StopResult | null;
-  }>({ origin: null, destination: null });
+  }>({ origin: savedStops.origin, destination: savedStops.destination });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mapStops));
+  }, [mapStops]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | null>(null);
   const { data, isFetching, isError, refetch, dataUpdatedAt } = useRoutes(query);
 
@@ -37,6 +54,8 @@ export default function Home() {
           onSubmit={handleSubmit}
           isLoading={isFetching}
           onStopsChange={(origin, destination) => setMapStops({ origin, destination })}
+          defaultOrigin={savedStops.origin}
+          defaultDestination={savedStops.destination}
         />
 
         {isError && (
