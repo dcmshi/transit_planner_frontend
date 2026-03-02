@@ -34,7 +34,11 @@ export default function Home() {
   }>({ origin: savedStops.origin, destination: savedStops.destination });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mapStops));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mapStops));
+    } catch {
+      // Ignore quota errors — persistence is best-effort
+    }
   }, [mapStops]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | null>(null);
   const { data, isFetching, isError, refetch, dataUpdatedAt } = useRoutes(query);
