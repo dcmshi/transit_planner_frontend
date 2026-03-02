@@ -31,6 +31,10 @@ describe("formatGtfsTime", () => {
   it("pads single-digit hours", () => {
     expect(formatGtfsTime("8:05:00")).toBe("08:05");
   });
+
+  it("pads single-digit minutes", () => {
+    expect(formatGtfsTime("09:5:00")).toBe("09:05");
+  });
 });
 
 describe("formatDistance", () => {

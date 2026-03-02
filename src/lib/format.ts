@@ -9,7 +9,7 @@ export function formatDuration(seconds: number): string {
 /** Strip GTFS HH:MM:SS (which may exceed 24:00:00) to HH:MM for display */
 export function formatGtfsTime(hms: string): string {
   const [h, m] = hms.split(":");
-  return `${h.padStart(2, "0")}:${m}`;
+  return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
 }
 
 /** Format metres as "1.2 km" or "350 m" */
