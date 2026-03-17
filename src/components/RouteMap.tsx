@@ -104,8 +104,8 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
     if (origin && destination) {
       map.fitBounds(
         [
-          [origin.lon, origin.lat],
-          [destination.lon, destination.lat],
+          [Math.min(origin.lon, destination.lon), Math.min(origin.lat, destination.lat)],
+          [Math.max(origin.lon, destination.lon), Math.max(origin.lat, destination.lat)],
         ],
         { padding: 80, maxZoom: 13 }
       );
