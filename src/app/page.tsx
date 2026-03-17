@@ -18,20 +18,26 @@ const STORAGE_KEY = "go-transit-last-stops";
 export default function Home() {
   const [query, setQuery] = useState<RouteQuery | null>(null);
 
-  const [savedStops] = useState<{ origin: StopResult | null; destination: StopResult | null }>(() => {
-    if (typeof window === "undefined") return { origin: null, destination: null };
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : { origin: null, destination: null };
-    } catch {
-      return { origin: null, destination: null };
-    }
-  });
+  const [savedStops, setSavedStops] = useState<{ origin: StopResult | null; destination: StopResult | null }>({ origin: null, destination: null });
 
   const [mapStops, setMapStops] = useState<{
     origin: StopResult | null;
     destination: StopResult | null;
-  }>({ origin: savedStops.origin, destination: savedStops.destination });
+  }>({ origin: null, destination: null });
+
+  // Load persisted stops after hydration to avoid SSR/client mismatch
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { origin: StopResult | null; destination: StopResult | null };
+        setSavedStops(parsed);
+        setMapStops(parsed);
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
 
   useEffect(() => {
     try {

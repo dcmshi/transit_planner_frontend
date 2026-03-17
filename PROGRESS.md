@@ -78,7 +78,19 @@
 - [x] **Error boundary** — `<ErrorBoundary>` wraps all children in `layout.tsx`; shows a reload prompt on unhandled render errors
 - [x] **Persist last stops** — origin and destination persisted in `localStorage` under `"go-transit-last-stops"` and restored on next visit
 
-**Test total: 72 across 12 files**
+### Audit fixes — medium
+- [x] **`aria-controls`** added to `StopSearch` combobox input pointing to `id="stop-listbox"` on the `<ul>` (ARIA spec requirement)
+- [x] **Keyboard nav tests** (6) added to `StopSearch.test.tsx` — ArrowDown/Up bounds, Enter selects, Escape closes, `aria-activedescendant` updates
+- [x] **`as any` in `useRoutePolyline.test.ts`** replaced with typed `q()` helper using `UseQueryResult<StopResult | null>`
+
+### Audit fixes — low
+- [x] **`formatGtfsTime` minute padding** — `m.padStart(2, "0")` added; new test covers single-digit minutes
+- [x] **`localStorage.setItem` quota guard** — write wrapped in try-catch; silently ignored on quota errors
+- [x] **`role="status"` on `LoadingRoutes`** — screen readers now announce the loading state; spinner has `aria-hidden="true"`
+- [x] **`useHealth` post-healthy polling** — changed from `false` to `5 * 60_000` ms so degradation (graph rebuild, reliability drop) is detected
+- [x] **`useRoutePolyline` map flash fix** — last settled GeoJSON held in a `useRef`; returned while queries are pending so map doesn't blank between route selections
+
+**Test total: 79 across 12 files**
 
 ---
 

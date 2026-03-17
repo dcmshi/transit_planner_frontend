@@ -53,11 +53,11 @@ bun test              # run all tests once
 bun run test:watch    # watch mode
 ```
 
-72 tests across 12 files covering utility functions and all major components:
+79 tests across 12 files covering utility functions and all major components:
 
 | File | What it covers |
 |---|---|
-| `src/lib/format.test.ts` | `formatDuration`, `formatGtfsTime`, `formatDistance` |
+| `src/lib/format.test.ts` | `formatDuration`, `formatGtfsTime` (incl. minute padding), `formatDistance` |
 | `src/lib/explanation.test.ts` | `isExplanationAvailable`, `parseRecommendedIndex` |
 | `src/lib/groupLegs.test.ts` | consecutive same-trip leg merging |
 | `src/components/RiskBadge.test.tsx` | colour class per risk level |
@@ -115,6 +115,10 @@ src/
 
 **v5 — Quality & accessibility**
 - Date picker defaults to today's local date (fixed UTC off-by-one) and blocks past dates
-- Stop search: keyboard navigation (↑ ↓ navigate, Enter selects, Escape closes), `role="combobox"`, `aria-activedescendant`
+- Stop search: keyboard navigation (↑ ↓ navigate, Enter selects, Escape closes), `role="combobox"`, `aria-controls`, `aria-activedescendant`
 - Error boundary in root layout — unhandled render errors show a reload prompt instead of a blank page
-- Last-used origin and destination persisted in `localStorage` and restored on next visit
+- Last-used origin and destination persisted in `localStorage` (with quota-error guard) and restored on next visit
+- `formatGtfsTime` pads both hours and minutes for robustness
+- `LoadingRoutes` announces loading state to screen readers via `role="status"`
+- `useHealth` continues polling at 5 min after healthy to detect subsequent degradation
+- Route polyline held in a ref during pending queries — map no longer flashes empty between route selections
