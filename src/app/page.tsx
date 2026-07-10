@@ -1,61 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { RouteForm, type RouteQuery } from "@/components/RouteForm";
 import { RouteList } from "@/components/RouteList";
 import { LoadingRoutes } from "@/components/LoadingRoutes";
 import { useRoutes } from "@/hooks/useRoutes";
-import type { StopResult } from "@/lib/api";
+import { useSavedStops } from "@/hooks/useSavedStops";
+import { routeKeys } from "@/lib/routeKey";
 
 const RouteMap = dynamic(
   () => import("@/components/RouteMap").then((m) => m.RouteMap),
   { ssr: false }
 );
 
-const STORAGE_KEY = "go-transit-last-stops";
-
 export default function Home() {
   const [query, setQuery] = useState<RouteQuery | null>(null);
-
-  const [savedStops, setSavedStops] = useState<{ origin: StopResult | null; destination: StopResult | null }>({ origin: null, destination: null });
-
-  const [mapStops, setMapStops] = useState<{
-    origin: StopResult | null;
-    destination: StopResult | null;
-  }>({ origin: null, destination: null });
-
-  // Load persisted stops after hydration to avoid SSR/client mismatch
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { origin: StopResult | null; destination: StopResult | null };
-        setSavedStops(parsed);
-        setMapStops(parsed);
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mapStops));
-    } catch {
-      // Ignore quota errors — persistence is best-effort
-    }
-  }, [mapStops]);
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | null>(null);
-  const { data, isFetching, isError, refetch, dataUpdatedAt } = useRoutes(query);
+  const [stops, setStops] = useSavedStops();
+  // Selection is tracked by route identity (not index) so it survives
+  // background refetches that reorder the results
+  const [selectedRouteKey, setSelectedRouteKey] = useState<string | null>(null);
+  const { data, isFetching, isError, refetch, dataUpdatedAt, explanation } = useRoutes(query);
 
   const handleSubmit = (q: RouteQuery) => {
     setQuery(q);
-    setSelectedRouteIndex(null);
+    setSelectedRouteKey(null);
   };
 
-  const effectiveSelectedIndex = selectedRouteIndex ?? (data ? 0 : null);
-  const selectedRoute = data?.routes[effectiveSelectedIndex ?? 0] ?? null;
+  const keys = data ? routeKeys(data.routes) : [];
+  let selectedIndex = selectedRouteKey ? keys.indexOf(selectedRouteKey) : -1;
+  if (selectedIndex === -1 && data && data.routes.length > 0) selectedIndex = 0;
+  const selectedRoute = selectedIndex >= 0 ? (data?.routes[selectedIndex] ?? null) : null;
 
   return (
     <div className="flex flex-col lg:flex-row lg:gap-6 lg:items-start">
@@ -63,9 +38,10 @@ export default function Home() {
         <RouteForm
           onSubmit={handleSubmit}
           isLoading={isFetching}
-          onStopsChange={(origin, destination) => setMapStops({ origin, destination })}
-          defaultOrigin={savedStops.origin}
-          defaultDestination={savedStops.destination}
+          origin={stops.origin}
+          destination={stops.destination}
+          onOriginChange={(origin) => setStops({ ...stops, origin })}
+          onDestinationChange={(destination) => setStops({ ...stops, destination })}
         />
 
         {isError && (
@@ -74,32 +50,24 @@ export default function Home() {
           </p>
         )}
 
-        {(() => {
-          const isInitialLoading = isFetching && !data;
-          const isRefreshing = isFetching && !!data;
-          return (
-            <>
-              {isInitialLoading && <LoadingRoutes />}
-              {data && (
-                <RouteList
-                  routes={data.routes}
-                  explanation={data.explanation ?? undefined}
-                  onRefresh={refetch}
-                  dataUpdatedAt={dataUpdatedAt}
-                  isRefreshing={isRefreshing}
-                  selectedRouteIndex={effectiveSelectedIndex}
-                  onSelectRoute={setSelectedRouteIndex}
-                />
-              )}
-            </>
-          );
-        })()}
+        {isFetching && !data && <LoadingRoutes />}
+        {data && (
+          <RouteList
+            routes={data.routes}
+            explanation={explanation ?? undefined}
+            onRefresh={refetch}
+            dataUpdatedAt={dataUpdatedAt}
+            isRefreshing={isFetching && !!data}
+            selectedRouteIndex={selectedIndex >= 0 ? selectedIndex : null}
+            onSelectRoute={(i) => setSelectedRouteKey(keys[i] ?? null)}
+          />
+        )}
       </div>
 
       <div className="lg:w-[420px] lg:sticky lg:top-6 lg:self-start">
         <RouteMap
-          origin={mapStops.origin}
-          destination={mapStops.destination}
+          origin={stops.origin}
+          destination={stops.destination}
           selectedRoute={selectedRoute}
         />
       </div>

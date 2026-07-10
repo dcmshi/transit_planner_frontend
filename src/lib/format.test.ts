@@ -24,8 +24,18 @@ describe("formatGtfsTime", () => {
     expect(formatGtfsTime("09:07:00")).toBe("09:07");
   });
 
-  it("handles times past midnight (>24:00)", () => {
-    expect(formatGtfsTime("25:15:00")).toBe("25:15");
+  it("normalizes times past midnight with a +1 day annotation", () => {
+    expect(formatGtfsTime("25:15:00")).toBe("01:15 (+1 day)");
+  });
+
+  it("normalizes 24:xx to 00:xx (+1 day)", () => {
+    expect(formatGtfsTime("24:05:00")).toBe("00:05 (+1 day)");
+  });
+
+  it("returns malformed input as-is instead of throwing", () => {
+    expect(formatGtfsTime("0900")).toBe("0900");
+    expect(formatGtfsTime("")).toBe("");
+    expect(formatGtfsTime("ab:cd:ef")).toBe("ab:cd:ef");
   });
 
   it("pads single-digit hours", () => {

@@ -25,7 +25,7 @@ const fakeStop2: StopResult = {
 };
 
 beforeEach(() => {
-  mockUseStops.mockReturnValue({ data: [], isFetching: false } as ReturnType<typeof useStops>);
+  mockUseStops.mockReturnValue({ data: [], isFetching: false } as unknown as ReturnType<typeof useStops>);
 });
 
 describe("StopSearch", () => {
@@ -57,7 +57,7 @@ describe("StopSearch", () => {
   });
 
   it("shows 'No stops found' when results are empty and not fetching", () => {
-    mockUseStops.mockReturnValue({ data: [], isFetching: false } as ReturnType<typeof useStops>);
+    mockUseStops.mockReturnValue({ data: [], isFetching: false } as unknown as ReturnType<typeof useStops>);
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
     expect(screen.getByText("No stops found")).toBeInTheDocument();
@@ -79,6 +79,32 @@ describe("StopSearch", () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
+  it("associates the label with the input", () => {
+    render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
+    expect(screen.getByLabelText("Origin")).toBe(screen.getByRole("combobox"));
+  });
+
+  it("gives two instances distinct listbox and option ids", () => {
+    mockUseStops.mockReturnValue({ data: [fakeStop], isFetching: false } as ReturnType<typeof useStops>);
+    render(
+      <>
+        <StopSearch label="Origin" value={null} onChange={() => {}} />
+        <StopSearch label="Destination" value={null} onChange={() => {}} />
+      </>
+    );
+    const [originInput, destInput] = screen.getAllByRole("combobox");
+    expect(originInput.getAttribute("aria-controls")).not.toBe(destInput.getAttribute("aria-controls"));
+
+    fireEvent.change(originInput, { target: { value: "Gu" } });
+    fireEvent.change(destInput, { target: { value: "Gu" } });
+    const listboxes = screen.getAllByRole("listbox");
+    expect(listboxes).toHaveLength(2);
+    expect(listboxes[0].id).not.toBe(listboxes[1].id);
+    // aria-controls points at each instance's own listbox
+    expect(originInput.getAttribute("aria-controls")).toBe(listboxes[0].id);
+    expect(destInput.getAttribute("aria-controls")).toBe(listboxes[1].id);
+  });
+
   describe("keyboard navigation", () => {
     function openDropdown() {
       mockUseStops.mockReturnValue({ data: [fakeStop, fakeStop2], isFetching: false } as ReturnType<typeof useStops>);
@@ -86,17 +112,21 @@ describe("StopSearch", () => {
       fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
     }
 
+    function activeDescendant() {
+      return screen.getByRole("combobox").getAttribute("aria-activedescendant");
+    }
+
     it("ArrowDown sets aria-activedescendant to the first option", () => {
       openDropdown();
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
-      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-0");
+      expect(activeDescendant()).toMatch(/-option-0$/);
     });
 
     it("ArrowDown twice advances to the second option", () => {
       openDropdown();
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
-      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-1");
+      expect(activeDescendant()).toMatch(/-option-1$/);
     });
 
     it("ArrowDown does not advance past the last option", () => {
@@ -104,7 +134,7 @@ describe("StopSearch", () => {
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
-      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-1");
+      expect(activeDescendant()).toMatch(/-option-1$/);
     });
 
     it("ArrowUp does not go below the first option", () => {
@@ -112,7 +142,7 @@ describe("StopSearch", () => {
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowUp" });
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowUp" });
-      expect(screen.getByRole("combobox")).toHaveAttribute("aria-activedescendant", "stop-option-0");
+      expect(activeDescendant()).toMatch(/-option-0$/);
     });
 
     it("Enter selects the focused option and calls onChange", () => {
@@ -131,6 +161,23 @@ describe("StopSearch", () => {
       expect(screen.getByRole("listbox")).toBeInTheDocument();
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    });
+
+    it("Escape closes the dropdown even when it shows 'No stops found'", () => {
+      mockUseStops.mockReturnValue({ data: [], isFetching: false } as unknown as ReturnType<typeof useStops>);
+      render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
+      expect(screen.getByText("No stops found")).toBeInTheDocument();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    });
+
+    it("ArrowDown reopens a dropdown closed with Escape", () => {
+      openDropdown();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+      expect(screen.getByRole("listbox")).toBeInTheDocument();
     });
   });
 });

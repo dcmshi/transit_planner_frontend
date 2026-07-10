@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { StopSearch } from "@/components/StopSearch";
 import type { StopResult } from "@/lib/api";
 
@@ -24,31 +24,31 @@ export interface RouteQuery {
 interface Props {
   onSubmit: (query: RouteQuery) => void;
   isLoading?: boolean;
-  onStopsChange?: (origin: StopResult | null, destination: StopResult | null) => void;
-  defaultOrigin?: StopResult | null;
-  defaultDestination?: StopResult | null;
+  // Stops are controlled by the parent so values restored from storage (which
+  // arrive after hydration) show up in the form
+  origin: StopResult | null;
+  destination: StopResult | null;
+  onOriginChange: (stop: StopResult | null) => void;
+  onDestinationChange: (stop: StopResult | null) => void;
 }
 
-export function RouteForm({ onSubmit, isLoading = false, onStopsChange, defaultOrigin, defaultDestination }: Props) {
-  const [origin, setOrigin] = useState<StopResult | null>(defaultOrigin ?? null);
-  const [destination, setDestination] = useState<StopResult | null>(defaultDestination ?? null);
+export function RouteForm({ onSubmit, isLoading = false, origin, destination, onOriginChange, onDestinationChange }: Props) {
   const [date, setDate] = useState(todayDate());
   const [time, setTime] = useState(nowTime());
   const [explain, setExplain] = useState(false);
-
-  function handleOriginChange(stop: StopResult | null) {
-    setOrigin(stop);
-    onStopsChange?.(stop, destination);
-  }
-
-  function handleDestinationChange(stop: StopResult | null) {
-    setDestination(stop);
-    onStopsChange?.(origin, stop);
-  }
+  const [dateError, setDateError] = useState<string | null>(null);
+  const id = useId();
+  const dateId = `${id}-date`;
+  const timeId = `${id}-time`;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!origin || !destination) return;
+    // The date input's min attribute doesn't stop typed past dates
+    if (date < todayDate()) {
+      setDateError("Travel date can't be in the past.");
+      return;
+    }
     onSubmit({
       origin: origin.stop_id,
       destination: destination.stop_id,
@@ -67,29 +67,31 @@ export function RouteForm({ onSubmit, isLoading = false, onStopsChange, defaultO
           label="Origin"
           placeholder="Search origin stop…"
           value={origin}
-          onChange={handleOriginChange}
+          onChange={onOriginChange}
         />
         <StopSearch
           label="Destination"
           placeholder="Search destination stop…"
           value={destination}
-          onChange={handleDestinationChange}
+          onChange={onDestinationChange}
         />
 
         <div className="flex gap-3">
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Date</label>
+            <label htmlFor={dateId} className="text-sm font-medium text-gray-700">Date</label>
             <input
+              id={dateId}
               type="date"
               value={date}
               min={todayDate()}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => { setDate(e.target.value); setDateError(null); }}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Departure time</label>
+            <label htmlFor={timeId} className="text-sm font-medium text-gray-700">Departure time</label>
             <input
+              id={timeId}
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
@@ -97,6 +99,10 @@ export function RouteForm({ onSubmit, isLoading = false, onStopsChange, defaultO
             />
           </div>
         </div>
+
+        {dateError && (
+          <p role="alert" className="text-sm text-red-600">{dateError}</p>
+        )}
 
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">

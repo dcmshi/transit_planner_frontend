@@ -1,5 +1,6 @@
 import type { ScoredRoute } from "@/lib/api";
 import { parseRecommendedIndex } from "@/lib/explanation";
+import { routeKeys } from "@/lib/routeKey";
 import { ExplanationPanel } from "./ExplanationPanel";
 import { RouteCard } from "./RouteCard";
 
@@ -24,6 +25,8 @@ export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRef
   }
 
   const recommendedIndex = explanation ? parseRecommendedIndex(explanation) : null;
+  // Stable keys so expansion state survives refetches that reorder results
+  const keys = routeKeys(routes);
 
   return (
     <div className="mt-6 flex flex-col gap-3">
@@ -65,7 +68,7 @@ export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRef
       </div>
       {routes.map((route, i) => (
         <RouteCard
-          key={i}
+          key={keys[i]}
           route={route}
           index={i + 1}
           recommended={i === recommendedIndex}

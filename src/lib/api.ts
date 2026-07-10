@@ -1,9 +1,18 @@
 import type { components, operations } from "@/types/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, init);
+// Route scoring can take up to a minute on a cold backend cache; time out
+// rather than hanging forever if the backend stalls.
+const REQUEST_TIMEOUT_MS = 90_000;
+
+function withTimeout(signal?: AbortSignal): AbortSignal {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
+}
+
+async function apiFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, { signal: withTimeout(signal) });
   if (!res.ok) {
     throw new Error(`API ${res.status}: ${res.statusText}`);
   }
@@ -19,18 +28,22 @@ export type TripLeg = components["schemas"]["TripLeg"];
 export type WalkLeg = components["schemas"]["WalkLeg"];
 
 export const api = {
-  health: (): Promise<HealthResponse> => apiFetch("/health"),
+  health: (signal?: AbortSignal): Promise<HealthResponse> =>
+    apiFetch("/health", signal),
 
-  stops: (query: string): Promise<StopResult[]> =>
-    apiFetch(`/stops?query=${encodeURIComponent(query)}`),
+  stops: (query: string, signal?: AbortSignal): Promise<StopResult[]> =>
+    apiFetch(`/stops?query=${encodeURIComponent(query)}`, signal),
 
-  routes: async (params: {
-    origin: string;
-    destination: string;
-    departure_time?: string;
-    travel_date?: string;
-    explain?: boolean;
-  }): Promise<RoutesResponse> => {
+  routes: async (
+    params: {
+      origin: string;
+      destination: string;
+      departure_time?: string;
+      travel_date?: string;
+      explain?: boolean;
+    },
+    signal?: AbortSignal,
+  ): Promise<RoutesResponse> => {
     const qs = new URLSearchParams({
       origin: params.origin,
       destination: params.destination,
@@ -39,7 +52,7 @@ export const api = {
       // Only send explain when true — backend treats absence as false
       ...(params.explain === true && { explain: "true" }),
     });
-    const res = await fetch(`${API_BASE}/routes?${qs}`);
+    const res = await fetch(`${API_BASE}/routes?${qs}`, { signal: withTimeout(signal) });
     // 404 means no routes found for this origin/destination, not a real error
     if (res.status === 404) return { routes: [] };
     if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);

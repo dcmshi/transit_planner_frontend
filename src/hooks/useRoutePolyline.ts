@@ -1,9 +1,10 @@
 import { useQueries } from "@tanstack/react-query";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { api } from "@/lib/api";
 import type { ScoredRoute, StopResult } from "@/lib/api";
 
-type GeoJSON = ReturnType<typeof buildFeatureCollection>;
+export type RoutePolyline = ReturnType<typeof buildFeatureCollection>;
+
 function buildFeatureCollection(
   route: ScoredRoute,
   allCoords: Record<string, [number, number]>,
@@ -24,18 +25,21 @@ function buildFeatureCollection(
   return { type: "FeatureCollection" as const, features };
 }
 
+/**
+ * Resolve coordinates for a route's legs and build map GeoJSON.
+ *
+ * Returns:
+ * - `null`      — no route selected; the map should clear its polyline
+ * - `undefined` — coordinate lookups still in flight; the map should keep
+ *                 whatever it is currently showing (prevents a flash of empty
+ *                 map between route selections)
+ * - GeoJSON     — all lookups settled; draw this
+ */
 export function useRoutePolyline(
   route: ScoredRoute | null,
   origin: StopResult | null,
   destination: StopResult | null,
-) {
-  const lastGeojson = useRef<GeoJSON | null>(null);
-
-  // Known coordinates from the stop-search selections
-  const knownCoords: Record<string, [number, number]> = {};
-  if (origin)      knownCoords[origin.stop_id]      = [origin.lon, origin.lat];
-  if (destination) knownCoords[destination.stop_id] = [destination.lon, destination.lat];
-
+): RoutePolyline | null | undefined {
   // Intermediate stops (transfer points) that need a coordinate lookup
   const stopsToFetch = useMemo(() => {
     if (!route) return [];
@@ -46,40 +50,37 @@ export function useRoutePolyline(
     }
     all.delete(origin?.stop_id      ?? "___");
     all.delete(destination?.stop_id ?? "___");
-    return [...all.entries()].map(([id, name]) => ({ id, name }));
+    return (
+      [...all.entries()]
+        .map(([id, name]) => ({ id, name }))
+        // Names below the backend's search minimum can never resolve — drop
+        // them here so no query sits disabled (and therefore pending) forever
+        .filter(({ name }) => name.trim().length >= 2)
+    );
   }, [route, origin?.stop_id, destination?.stop_id]);
 
   // Fetch each intermediate stop by name, match by stop_id
   const queries = useQueries({
     queries: stopsToFetch.map(({ id, name }) => ({
       queryKey: ["stop-by-id", id],
-      queryFn: () =>
-        api.stops(name).then((results) => results.find((s) => s.stop_id === id) ?? null),
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        api.stops(name, signal).then((results) => results.find((s) => s.stop_id === id) ?? null),
       staleTime: Infinity,
-      enabled: name.length >= 2,
     })),
   });
 
-  // If route cleared, reset the cached value and clear the map
-  if (!route) {
-    lastGeojson.current = null;
-    return null;
-  }
+  if (!route) return null;
+  if (queries.some((q) => q.isPending)) return undefined;
 
-  // While intermediate stop queries are in-flight, show the previous polyline
-  // so the map doesn't flash empty between route selections
-  const allSettled = queries.every((q) => !q.isPending);
-  if (!allSettled) return lastGeojson.current;
-
-  // Merge fetched coords into lookup
-  const allCoords: Record<string, [number, number]> = { ...knownCoords };
+  // Known coordinates from the stop-search selections, plus fetched ones
+  const allCoords: Record<string, [number, number]> = {};
+  if (origin)      allCoords[origin.stop_id]      = [origin.lon, origin.lat];
+  if (destination) allCoords[destination.stop_id] = [destination.lon, destination.lat];
   stopsToFetch.forEach(({ id }, i) => {
     const s = queries[i]?.data;
     if (s) allCoords[id] = [s.lon, s.lat];
   });
 
   // Build GeoJSON — legs with missing coords are skipped gracefully
-  const geojson = buildFeatureCollection(route, allCoords);
-  lastGeojson.current = geojson;
-  return geojson;
+  return buildFeatureCollection(route, allCoords);
 }

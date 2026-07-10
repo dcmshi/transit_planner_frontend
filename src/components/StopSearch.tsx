@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { useStops } from "@/hooks/useStops";
 import type { StopResult } from "@/lib/api";
 
@@ -16,6 +16,11 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
   const [open, setOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Namespaced ids so the two StopSearch instances on the page never collide
+  const id = useId();
+  const inputId = `${id}-input`;
+  const listboxId = `${id}-listbox`;
+  const optionId = (index: number) => `${id}-option-${index}`;
 
   const { data: stops = [], isFetching } = useStops(inputValue);
 
@@ -30,19 +35,19 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
-  // Sync display value if external value changes
-  useEffect(() => {
+  // Sync display value when the external value changes (render-phase
+  // adjustment — https://react.dev/learn/you-might-not-need-an-effect)
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setInputValue(value?.stop_name ?? "");
-  }, [value]);
-
-  // Reset focused index when input changes or dropdown closes
-  useEffect(() => {
     setFocusedIndex(-1);
-  }, [inputValue]);
+  }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setInputValue(e.target.value);
     setOpen(true);
+    setFocusedIndex(-1);
     if (!e.target.value) onChange(null);
   }
 
@@ -54,6 +59,20 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    // Escape always closes, even when the dropdown shows "No stops found"
+    if (e.key === "Escape") {
+      setOpen(false);
+      setFocusedIndex(-1);
+      return;
+    }
+    // ArrowDown reopens a closed dropdown (standard combobox behavior)
+    if (e.key === "ArrowDown" && !showDropdown) {
+      if (inputValue.trim().length >= 2) {
+        e.preventDefault();
+        setOpen(true);
+      }
+      return;
+    }
     if (!showDropdown || stops.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -64,9 +83,6 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
     } else if (e.key === "Enter" && focusedIndex >= 0) {
       e.preventDefault();
       handleSelect(stops[focusedIndex]);
-    } else if (e.key === "Escape") {
-      setOpen(false);
-      setFocusedIndex(-1);
     }
   }
 
@@ -74,9 +90,10 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
 
   return (
     <div ref={containerRef} className="relative flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+      <label htmlFor={inputId} className="text-sm font-medium text-gray-700">{label}</label>
       <div className="relative">
         <input
+          id={inputId}
           type="text"
           role="combobox"
           value={inputValue}
@@ -87,8 +104,8 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
           aria-autocomplete="list"
           aria-expanded={showDropdown}
-          aria-controls="stop-listbox"
-          aria-activedescendant={focusedIndex >= 0 ? `stop-option-${focusedIndex}` : undefined}
+          aria-controls={listboxId}
+          aria-activedescendant={focusedIndex >= 0 ? optionId(focusedIndex) : undefined}
         />
         {isFetching && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
@@ -99,7 +116,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
 
       {showDropdown && (
         <ul
-          id="stop-listbox"
+          id={listboxId}
           role="listbox"
           className="absolute top-full z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
         >
@@ -109,7 +126,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           {stops.map((stop, index) => (
             <li
               key={stop.stop_id}
-              id={`stop-option-${index}`}
+              id={optionId(index)}
               role="option"
               aria-selected={stop.stop_id === value?.stop_id}
               onPointerDown={() => handleSelect(stop)}

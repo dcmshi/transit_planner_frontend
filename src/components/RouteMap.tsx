@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredRoute, StopResult } from "@/lib/api";
+import { stopBounds } from "@/lib/mapBounds";
 import { useRoutePolyline } from "@/hooks/useRoutePolyline";
 
 interface Props {
@@ -73,6 +74,9 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
+    // undefined = coordinate lookups in flight — keep the current polyline
+    // so the map doesn't flash empty between route selections
+    if (geojson === undefined) return;
     const source = map.getSource("route-polyline") as maplibregl.GeoJSONSource | undefined;
     if (!source) return;
     source.setData(geojson ?? { type: "FeatureCollection", features: [] });
@@ -102,13 +106,7 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
     }
 
     if (origin && destination) {
-      map.fitBounds(
-        [
-          [Math.min(origin.lon, destination.lon), Math.min(origin.lat, destination.lat)],
-          [Math.max(origin.lon, destination.lon), Math.max(origin.lat, destination.lat)],
-        ],
-        { padding: 80, maxZoom: 13 }
-      );
+      map.fitBounds(stopBounds(origin, destination), { padding: 80, maxZoom: 13 });
     } else if (origin) {
       map.flyTo({ center: [origin.lon, origin.lat], zoom: 12 });
     } else if (destination) {

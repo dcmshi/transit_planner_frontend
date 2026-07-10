@@ -31,35 +31,48 @@ export function RouteCard({ route, index, recommended = false, isSelected, onSel
           Recommended
         </div>
       )}
-      {/* Summary row */}
-      <button
-        onClick={() => { onSelect?.(); setExpanded((v) => !v); }}
-        className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-gray-400 w-5">#{index}</span>
-          <RiskBadge label={route.risk_label} />
-          <span className="text-base font-semibold text-gray-900">
-            {formatDuration(route.total_travel_seconds)}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          {route.transfers > 0 && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-              {route.transfers} transfer{route.transfers !== 1 ? "s" : ""}
+      {/* Summary row — selecting a route and expanding its details are
+          separate actions so collapsing never re-selects */}
+      <div className="flex w-full items-stretch hover:bg-gray-50 transition-colors">
+        <button
+          type="button"
+          onClick={() => onSelect?.()}
+          aria-pressed={isSelected}
+          className="flex flex-1 items-center justify-between gap-3 px-5 py-4 text-left"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-gray-400 w-5">#{index}</span>
+            <RiskBadge label={route.risk_label} />
+            <span className="text-base font-semibold text-gray-900">
+              {formatDuration(route.total_travel_seconds)}
             </span>
-          )}
-          {route.total_walk_metres > 0 && (
-            <span className="text-xs text-gray-400">{formatDistance(route.total_walk_metres)} walk</span>
-          )}
+          </div>
+          <div className="flex items-center gap-3 text-sm text-gray-500">
+            {route.transfers > 0 && (
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                {route.transfers} transfer{route.transfers !== 1 ? "s" : ""}
+              </span>
+            )}
+            {route.total_walk_metres > 0 && (
+              <span className="text-xs text-gray-400">{formatDistance(route.total_walk_metres)} walk</span>
+            )}
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Hide route details" : "Show route details"}
+          className="flex items-center px-4 text-gray-400 hover:text-gray-600"
+        >
           <svg
-            className={`h-4 w-4 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`}
+            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
-        </div>
-      </button>
+        </button>
+      </div>
 
       {/* Leg groups */}
       {expanded && (
@@ -102,6 +115,7 @@ function TripGroupRow({ group }: { group: TripLegGroup }) {
           {hasStops && (
             <button
               onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
               className="mt-1 text-left text-xs text-green-600 hover:text-green-800"
             >
               ↳ {stopCount} stop{stopCount !== 1 ? "s" : ""}{" "}

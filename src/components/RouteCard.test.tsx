@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RouteCard } from "./RouteCard";
 import type { ScoredRoute, WalkLeg } from "@/lib/api";
@@ -60,19 +60,38 @@ describe("RouteCard", () => {
     expect(screen.queryByText("Recommended")).not.toBeInTheDocument();
   });
 
-  it("expands to show leg details when the summary row is clicked", () => {
+  it("expands to show leg details when the details button is clicked", () => {
     render(<RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} />);
     expect(screen.queryByText(/Stop A to Stop B/i)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button"));
+    const details = screen.getByRole("button", { name: /route details/i });
+    expect(details).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(details);
+    expect(details).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText(/Stop A to Stop B/i)).toBeInTheDocument();
     expect(screen.getByText("Walk 150 m")).toBeInTheDocument();
   });
 
-  it("collapses leg details when the summary row is clicked again", () => {
+  it("collapses leg details when the details button is clicked again", () => {
     render(<RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} />);
-    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
     expect(screen.getByText(/Stop A to Stop B/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
     expect(screen.queryByText(/Stop A to Stop B/i)).not.toBeInTheDocument();
+  });
+
+  it("clicking the summary selects the route without expanding it", () => {
+    const onSelect = vi.fn();
+    render(<RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} onSelect={onSelect} />);
+    fireEvent.click(screen.getByRole("button", { name: /#1/ }));
+    expect(onSelect).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/Stop A to Stop B/i)).not.toBeInTheDocument();
+  });
+
+  it("expanding and collapsing details does not re-select the route", () => {
+    const onSelect = vi.fn();
+    render(<RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} onSelect={onSelect} />);
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });

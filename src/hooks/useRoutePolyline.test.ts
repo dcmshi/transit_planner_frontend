@@ -84,11 +84,28 @@ describe("useRoutePolyline", () => {
     expect(result.current).toBeNull();
   });
 
-  it("returns null while a query is pending", () => {
+  it("returns undefined (keep current polyline) while a query is pending", () => {
     const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
     mockUseQueries.mockReturnValue([q({ isPending: true, data: undefined })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    expect(result.current).toBeNull();
+    expect(result.current).toBeUndefined();
+  });
+
+  it("excludes stops with names below the search minimum so they never block settling", () => {
+    // Regression: a <2-char name used to create a permanently-disabled (and
+    // therefore permanently-pending) query that froze the polyline forever
+    const route = makeRoute([
+      makeTripLeg("S1", "Origin Stop", "SX", "A"), // 1-char stop name
+      makeTripLeg("SX", "A", "S2", "Dest Stop"),
+    ]);
+    mockUseQueries.mockReturnValue([]);
+    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
+    // No query was requested for the unfetchable stop…
+    const lastCall = mockUseQueries.mock.calls.at(-1)?.[0] as { queries: unknown[] } | undefined;
+    expect(lastCall?.queries ?? []).toHaveLength(0);
+    // …and the hook settles instead of returning undefined forever
+    expect(result.current).not.toBeUndefined();
+    expect(result.current?.type).toBe("FeatureCollection");
   });
 
   it("returns a FeatureCollection when all queries settled", () => {

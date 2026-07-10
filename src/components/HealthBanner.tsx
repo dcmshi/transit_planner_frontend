@@ -1,6 +1,7 @@
 "use client";
 
 import { useHealth } from "@/hooks/useHealth";
+import { API_BASE } from "@/lib/api";
 
 export function HealthBanner() {
   const { data, isError, isPending } = useHealth();
@@ -10,7 +11,7 @@ export function HealthBanner() {
     return (
       <Banner variant="error">
         Cannot reach the backend. Make sure the GO Transit API is running at{" "}
-        <code className="font-mono text-sm">{process.env.NEXT_PUBLIC_API_URL}</code>.
+        <code className="font-mono text-sm">{API_BASE}</code>.
       </Banner>
     );
   }

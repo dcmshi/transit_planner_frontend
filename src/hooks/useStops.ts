@@ -14,7 +14,7 @@ export function useStops(query: string) {
 
   return useQuery({
     queryKey: ["stops", debouncedQuery],
-    queryFn: () => api.stops(debouncedQuery),
+    queryFn: ({ signal }) => api.stops(debouncedQuery, signal),
     enabled: debouncedQuery.trim().length >= 2,
     staleTime: 5 * 60 * 1000, // 5 min — stop names don't change often
     placeholderData: (prev) => prev, // keep previous results while typing

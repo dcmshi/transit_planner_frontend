@@ -49,26 +49,35 @@ bunx openapi-typescript http://localhost:8000/openapi.json -o src/types/api.ts
 ## Testing
 
 ```bash
-bun test              # run all tests once
+bun run test          # run all tests once (vitest — plain `bun test` runs bun's own runner)
 bun run test:watch    # watch mode
 ```
 
-79 tests across 12 files covering utility functions and all major components:
+128 tests across 21 files covering utility functions, hooks, and all major components:
 
 | File | What it covers |
 |---|---|
-| `src/lib/format.test.ts` | `formatDuration`, `formatGtfsTime` (incl. minute padding), `formatDistance` |
+| `src/lib/format.test.ts` | `formatDuration`, `formatGtfsTime` (padding, past-midnight, malformed input), `formatDistance` |
 | `src/lib/explanation.test.ts` | `isExplanationAvailable`, `parseRecommendedIndex` |
 | `src/lib/groupLegs.test.ts` | consecutive same-trip leg merging |
+| `src/lib/api.test.ts` | 404 → empty routes mapping, explain flag, query encoding, timeout signal |
+| `src/lib/routeKey.test.ts` | stable route identity, duplicate disambiguation, reorder stability |
+| `src/lib/mapBounds.test.ts` | SW/NE corner ordering regardless of stop orientation |
 | `src/components/RiskBadge.test.tsx` | colour class per risk level |
 | `src/components/ExplanationPanel.test.tsx` | available vs. Ollama-unavailable states |
 | `src/components/HealthBanner.test.tsx` | all 5 health/data states |
-| `src/components/StopSearch.test.tsx` | dropdown threshold, keyboard nav, selection, clear |
+| `src/components/StopSearch.test.tsx` | dropdown threshold, keyboard nav, Escape/ArrowDown edge cases, unique ids, selection, clear |
 | `src/components/LoadingRoutes.test.tsx` | spinner and loading text |
-| `src/components/RouteForm.test.tsx` | render, submit gating, payload shape, explain flag, stop persistence |
+| `src/components/RouteForm.test.tsx` | render, submit gating, payload shape, explain flag, controlled stops, past-date validation |
 | `src/components/RouteList.test.tsx` | empty state, route count, explanation panel |
-| `src/components/RouteCard.test.tsx` | summary row, expand/collapse, recommended flag |
-| `src/hooks/useRoutePolyline.test.ts` | GeoJSON output, coord resolution, missing-coord skip, leg properties |
+| `src/components/RouteCard.test.tsx` | summary row, select vs. expand decoupling, `aria-expanded`, recommended flag |
+| `src/components/ErrorBoundary.test.tsx` | fallback rendering and error logging |
+| `src/hooks/useRoutePolyline.test.ts` | GeoJSON output, coord resolution, missing-coord skip, pending sentinel, leg properties |
+| `src/hooks/useSavedStops.test.tsx` | load after hydration, StrictMode clobber regression, persistence, corrupt JSON |
+| `src/hooks/useStops.test.tsx` | 300 ms debounce, minimum query length |
+| `src/hooks/useHealth.test.ts` | poll interval per health state |
+| `src/hooks/useRoutes.test.tsx` | explanation fetched separately and excluded from background refetch |
+| `src/app/page.test.tsx` | persisted stops restored into form, submit wiring, selection reset |
 
 ## Project structure
 

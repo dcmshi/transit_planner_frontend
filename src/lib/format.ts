@@ -6,9 +6,19 @@ export function formatDuration(seconds: number): string {
   return `${h}h ${m}m`;
 }
 
-/** Strip GTFS HH:MM:SS (which may exceed 24:00:00) to HH:MM for display */
+/**
+ * Strip GTFS HH:MM:SS to HH:MM for display. GTFS times may exceed 24:00:00
+ * for service past midnight — those are normalized and annotated "+1 day".
+ * Malformed input is returned as-is rather than throwing mid-render.
+ */
 export function formatGtfsTime(hms: string): string {
   const [h, m] = hms.split(":");
+  if (!h || !m) return hms;
+  const hours = Number(h);
+  if (Number.isNaN(hours)) return hms;
+  if (hours >= 24) {
+    return `${String(hours - 24).padStart(2, "0")}:${m.padStart(2, "0")} (+1 day)`;
+  }
   return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
 }
 

@@ -94,6 +94,41 @@
 
 ---
 
+## v6 — Repo Audit Fixes (2026-07-10)
+
+All items from the 2026-07-10 audit (see `TODO.md`) addressed:
+
+### Bug fixes
+- [x] **Persisted stops now restore into the form** — stop state lifted to `page.tsx` via new `useSavedStops` hook; `RouteForm` is controlled for origin/destination
+- [x] **localStorage clobber on mount fixed** — writes suppressed until the post-hydration load completes (StrictMode-safe, regression-tested)
+- [x] **`.env.example` committed** — was silently swallowed by the `.env*` gitignore pattern
+- [x] **`useRoutePolyline` stale-pending fix** — unfetchable short-named stops filtered out instead of left as permanently-pending disabled queries
+- [x] **`useRoutePolyline` concurrent-render safety** — render-phase ref mutation replaced with a `null`/`undefined`/GeoJSON return contract; `RouteMap` holds the previous polyline while lookups are in flight
+
+### Behaviour & UX
+- [x] **AI explanation split into its own query** — fetched once per journey, no longer re-triggered by the 5-minute background refresh
+- [x] **Route selection and React keys are identity-based** (`routeKey`) — survive background refetches that reorder results
+- [x] **Card select and expand decoupled** — summary click selects; a dedicated chevron button (with `aria-expanded`) toggles details
+- [x] **GTFS times past midnight normalized** — `25:15` → `01:15 (+1 day)`; malformed input no longer throws
+- [x] **Past travel dates rejected at submit** with an inline error
+- [x] **API requests carry abort signals + 90 s timeout**
+
+### Accessibility
+- [x] **Unique per-instance ids in `StopSearch`** (`useId`) — `aria-controls`/`aria-activedescendant` no longer collide across the two comboboxes
+- [x] **All form labels associated** via `htmlFor`/`id`
+- [x] **Escape closes the empty "No stops found" dropdown; ArrowDown reopens a closed one**
+
+### Infrastructure
+- [x] **GitHub Actions CI** — lint, typecheck, tests on push/PR
+- [x] **ESLint + `tsc --noEmit` pass** (both had pre-existing failures)
+- [x] **`ErrorBoundary` logs caught errors**; `HealthBanner` shows the real API base URL
+- [x] **Invalid `ignoreScripts` field removed** from package.json
+- [x] **README `bun test` → `bun run test`** (plain `bun test` invokes bun's own runner, not vitest)
+
+**Test total: 128 across 21 files**
+
+---
+
 ## Out of Scope (future)
 
 - User accounts / saved journeys
