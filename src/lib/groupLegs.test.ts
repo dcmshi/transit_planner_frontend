@@ -29,7 +29,6 @@ function makeWalkLeg(overrides: Partial<WalkLeg> = {}): WalkLeg {
     to_stop_name: "Stop C",
     distance_m: 200,
     walk_seconds: 180,
-    risk: null,
     ...overrides,
   };
 }

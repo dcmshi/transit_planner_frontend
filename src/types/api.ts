@@ -47,6 +47,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Alerts
+         * @description Active GTFS-RT service alerts — lets a frontend show a disruption
+         *     banner without requesting routes.  Empty until RT polling is active.
+         */
+        get: operations["get_alerts_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/routes": {
         parameters: {
             query?: never;
@@ -81,15 +102,35 @@ export interface paths {
         put?: never;
         /**
          * Trigger Gtfs Ingest
-         * @description Manually trigger a GTFS static data refresh, graph rebuild, and
-         *     reliability reseed.  (In production this runs on a daily schedule.)
+         * @description Trigger a GTFS static data refresh, graph rebuild, and reliability
+         *     reseed in the background.  (In production this also runs on a daily
+         *     schedule.)
          *
-         *     The reseed always runs as a full overwrite (fill_gaps_only=False) so
-         *     that synthetic priors stay in sync with the updated schedule.  Once
-         *     GTFS-RT data is flowing, the daily scheduler should switch to
-         *     fill_gaps_only=True to preserve accumulated real observations.
+         *     Returns 202 immediately — the full ingest takes ~60 s.  Poll
+         *     GET /ingest/status (or /health) for completion.  409 if an ingest is
+         *     already running.
          */
         post: operations["trigger_gtfs_ingest_ingest_gtfs_static_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ingest/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ingest Status
+         * @description State of the current/most recent ingest (manual or daily refresh).
+         */
+        get: operations["ingest_status_ingest_status_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -124,12 +165,41 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AlertResult */
+        AlertResult: {
+            /** Alert Id */
+            alert_id: string;
+            /** Header */
+            header: string;
+            /** Description */
+            description: string;
+            /** Affected Route Ids */
+            affected_route_ids: string[];
+            /** Affected Stop Ids */
+            affected_stop_ids: string[];
+            /** Fetched At */
+            fetched_at: string;
+        };
         /** GtfsRtStats */
         GtfsRtStats: {
             /** Polling Active */
             polling_active: boolean;
             /** Startup Fetch Only */
             startup_fetch_only: boolean;
+            /** Last Fetched At */
+            last_fetched_at: string | null;
+            /** Consecutive Failures */
+            consecutive_failures: number;
+            /** Backing Off Until */
+            backing_off_until: string | null;
+            /** Polling Coverage Since */
+            polling_coverage_since: string | null;
+            /** Trip Updates */
+            trip_updates: number;
+            /** Service Alerts */
+            service_alerts: number;
+            /** Vehicle Positions */
+            vehicle_positions: number;
         };
         /** GtfsStats */
         GtfsStats: {
@@ -174,9 +244,22 @@ export interface components {
              * Status
              * @constant
              */
-            status: "ok";
+            status: "accepted";
             /** Message */
             message: string;
+        };
+        /** IngestStatusResponse */
+        IngestStatusResponse: {
+            /** Running */
+            running: boolean;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Last Status */
+            last_status: ("ok" | "error") | null;
+            /** Last Message */
+            last_message: string | null;
         };
         /** LiveRisk */
         LiveRisk: {
@@ -198,6 +281,10 @@ export interface components {
             records: number;
             /** Last Seeded At */
             last_seeded_at: string | null;
+            /** By Source */
+            by_source: {
+                [key: string]: number;
+            };
         };
         /** RoutesResponse */
         RoutesResponse: {
@@ -277,6 +364,12 @@ export interface components {
             /** Travel Seconds */
             travel_seconds: number;
             risk: components["schemas"]["LiveRisk"] | null;
+            /** Live Delay Seconds */
+            live_delay_seconds?: number | null;
+            /** Expected Departure */
+            expected_departure?: string | null;
+            /** Expected Arrival */
+            expected_arrival?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -310,8 +403,6 @@ export interface components {
             distance_m: number;
             /** Walk Seconds */
             walk_seconds: number;
-            /** Risk */
-            risk?: null;
         };
     };
     responses: never;
@@ -374,6 +465,26 @@ export interface operations {
             };
         };
     };
+    get_alerts_alerts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertResult"][];
+                };
+            };
+        };
+    };
     get_routes_routes_get: {
         parameters: {
             query: {
@@ -424,12 +535,32 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successful Response */
-            200: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["IngestResponse"];
+                };
+            };
+        };
+    };
+    ingest_status_ingest_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestStatusResponse"];
                 };
             };
         };

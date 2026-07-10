@@ -41,7 +41,6 @@ function makeWalkLeg(fromId: string, fromName: string, toId: string, toName: str
     to_stop_name: toName,
     distance_m: 200,
     walk_seconds: 150,
-    risk: null,
   };
 }
 

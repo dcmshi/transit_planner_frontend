@@ -23,7 +23,6 @@ const walkLeg: WalkLeg = {
   to_stop_name: "Stop B",
   distance_m: 150,
   walk_seconds: 120,
-  risk: null,
 };
 
 describe("RouteCard", () => {
