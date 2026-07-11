@@ -79,6 +79,20 @@ describe("StopSearch", () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
+  it("clears the selection when the text is edited away from the selected stop", () => {
+    // Regression: editing (not just clearing) used to keep the stale
+    // selection, so the form submitted a stop the input no longer displayed
+    const onChange = vi.fn();
+    render(<StopSearch label="Origin" value={fakeStop} onChange={onChange} />);
+    const input = screen.getByRole("combobox");
+    expect(input).toHaveValue("Guelph Central Station");
+
+    fireEvent.change(input, { target: { value: "Guelph Central Stationx" } });
+    expect(onChange).toHaveBeenCalledWith(null);
+    // The user's typing is preserved, not wiped by the value sync
+    expect(input).toHaveValue("Guelph Central Stationx");
+  });
+
   it("associates the label with the input", () => {
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
     expect(screen.getByLabelText("Origin")).toBe(screen.getByRole("combobox"));

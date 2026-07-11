@@ -6,9 +6,13 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:800
 // rather than hanging forever if the backend stalls.
 const REQUEST_TIMEOUT_MS = 90_000;
 
-function withTimeout(signal?: AbortSignal): AbortSignal {
+function withTimeout(signal?: AbortSignal): AbortSignal | undefined {
+  // AbortSignal.timeout/any need Chrome 116+ / Firefox 124+ / Safari 17.4+ —
+  // on older browsers degrade to no timeout rather than throwing pre-fetch
+  if (typeof AbortSignal.timeout !== "function") return signal;
   const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-  return signal ? AbortSignal.any([signal, timeout]) : timeout;
+  if (!signal) return timeout;
+  return typeof AbortSignal.any === "function" ? AbortSignal.any([signal, timeout]) : signal;
 }
 
 async function apiFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
@@ -21,6 +25,7 @@ async function apiFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 // Convenience type aliases derived from the generated schema
 export type HealthResponse = components["schemas"]["HealthResponse"];
+export type AlertResult = components["schemas"]["AlertResult"];
 export type StopResult = operations["search_stops_stops_get"]["responses"][200]["content"]["application/json"][number];
 export type RoutesResponse = components["schemas"]["RoutesResponse"];
 export type ScoredRoute = components["schemas"]["ScoredRoute"];
@@ -33,6 +38,9 @@ export const api = {
 
   stops: (query: string, signal?: AbortSignal): Promise<StopResult[]> =>
     apiFetch(`/stops?query=${encodeURIComponent(query)}`, signal),
+
+  alerts: (signal?: AbortSignal): Promise<AlertResult[]> =>
+    apiFetch("/alerts", signal),
 
   routes: async (
     params: {

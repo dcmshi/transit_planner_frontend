@@ -58,6 +58,28 @@ describe("useRoutes", () => {
     expect(mockRoutes.mock.calls.filter(([p]) => p.explain === true)).toHaveLength(1);
   });
 
+  it("hides the explanation when explain is turned off for the same journey", async () => {
+    // Regression: a disabled query still exposes its cached data, which
+    // used to resurface an explanation the user had unchecked
+    mockRoutes.mockImplementation(async (p) =>
+      p.explain ? { routes: [], explanation: "Option 1 is best" } : { routes: [] },
+    );
+    const { result, rerender } = renderHook(({ p }) => useRoutes(p), {
+      wrapper: createWrapper(),
+      initialProps: { p: { ...params, explain: true } },
+    });
+    await waitFor(() => expect(result.current.explanation).toBe("Option 1 is best"));
+
+    rerender({ p: { ...params, explain: false } });
+    expect(result.current.explanation).toBeNull();
+
+    // …and turning it back on restores the cached value without a new call
+    const explainCalls = mockRoutes.mock.calls.filter(([p]) => p.explain === true).length;
+    rerender({ p: { ...params, explain: true } });
+    await waitFor(() => expect(result.current.explanation).toBe("Option 1 is best"));
+    expect(mockRoutes.mock.calls.filter(([p]) => p.explain === true)).toHaveLength(explainCalls);
+  });
+
   it("does not re-run the explanation when routes are refetched", async () => {
     // Regression: the explanation is an expensive LLM call and used to be
     // re-triggered by every 5-minute background refresh

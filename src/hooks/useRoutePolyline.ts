@@ -69,18 +69,29 @@ export function useRoutePolyline(
     })),
   });
 
-  if (!route) return null;
-  if (queries.some((q) => q.isPending)) return undefined;
+  const allSettled = !queries.some((q) => q.isPending);
+  // Stable fingerprint of the resolved coordinates — stands in for the
+  // queries array (new identity every render) so the memo only invalidates
+  // when a lookup actually resolves differently
+  const dataKey = queries
+    .map((q) => (q.data ? `${q.data.stop_id}:${q.data.lon},${q.data.lat}` : "?"))
+    .join("|");
 
-  // Known coordinates from the stop-search selections, plus fetched ones
-  const allCoords: Record<string, [number, number]> = {};
-  if (origin)      allCoords[origin.stop_id]      = [origin.lon, origin.lat];
-  if (destination) allCoords[destination.stop_id] = [destination.lon, destination.lat];
-  stopsToFetch.forEach(({ id }, i) => {
-    const s = queries[i]?.data;
-    if (s) allCoords[id] = [s.lon, s.lat];
-  });
+  return useMemo(() => {
+    if (!route) return null;
+    if (!allSettled) return undefined;
 
-  // Build GeoJSON — legs with missing coords are skipped gracefully
-  return buildFeatureCollection(route, allCoords);
+    // Known coordinates from the stop-search selections, plus fetched ones
+    const allCoords: Record<string, [number, number]> = {};
+    if (origin)      allCoords[origin.stop_id]      = [origin.lon, origin.lat];
+    if (destination) allCoords[destination.stop_id] = [destination.lon, destination.lat];
+    stopsToFetch.forEach(({ id }, i) => {
+      const s = queries[i]?.data;
+      if (s) allCoords[id] = [s.lon, s.lat];
+    });
+
+    // Build GeoJSON — legs with missing coords are skipped gracefully
+    return buildFeatureCollection(route, allCoords);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- queries' consumed data is captured by dataKey
+  }, [route, allSettled, stopsToFetch, origin, destination, dataKey]);
 }

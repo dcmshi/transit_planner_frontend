@@ -60,6 +60,7 @@ export default function Home() {
             isRefreshing={isFetching && !!data}
             selectedRouteIndex={selectedIndex >= 0 ? selectedIndex : null}
             onSelectRoute={(i) => setSelectedRouteKey(keys[i] ?? null)}
+            routeKeys={keys}
           />
         )}
       </div>

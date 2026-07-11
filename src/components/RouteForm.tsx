@@ -36,7 +36,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
   const [date, setDate] = useState(todayDate());
   const [time, setTime] = useState(nowTime());
   const [explain, setExplain] = useState(false);
-  const [dateError, setDateError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const id = useId();
   const dateId = `${id}-date`;
   const timeId = `${id}-time`;
@@ -44,11 +44,21 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!origin || !destination) return;
-    // The date input's min attribute doesn't stop typed past dates
-    if (date < todayDate()) {
-      setDateError("Travel date can't be in the past.");
+    // The inputs' min attributes don't stop typed or cleared values
+    if (!date) {
+      setFormError("Please choose a travel date.");
       return;
     }
+    if (date < todayDate()) {
+      setFormError("Travel date can't be in the past.");
+      return;
+    }
+    if (!time) {
+      setFormError("Please choose a departure time.");
+      return;
+    }
+    // A past time on today's date is allowed on purpose — it shows the rest
+    // of today's schedule from that point (the min attribute only nudges).
     onSubmit({
       origin: origin.stop_id,
       destination: destination.stop_id,
@@ -62,7 +72,9 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* noValidate: our submit handler owns validation messaging — native
+          min-attribute bubbles would block backdated same-day queries */}
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <StopSearch
           label="Origin"
           placeholder="Search origin stop…"
@@ -84,7 +96,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
               type="date"
               value={date}
               min={todayDate()}
-              onChange={(e) => { setDate(e.target.value); setDateError(null); }}
+              onChange={(e) => { setDate(e.target.value); setFormError(null); }}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
             />
           </div>
@@ -94,14 +106,15 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
               id={timeId}
               type="time"
               value={time}
-              onChange={(e) => setTime(e.target.value)}
+              min={date === todayDate() ? nowTime() : undefined}
+              onChange={(e) => { setTime(e.target.value); setFormError(null); }}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
             />
           </div>
         </div>
 
-        {dateError && (
-          <p role="alert" className="text-sm text-red-600">{dateError}</p>
+        {formError && (
+          <p role="alert" className="text-sm text-red-600">{formError}</p>
         )}
 
         <div className="flex items-center justify-between">

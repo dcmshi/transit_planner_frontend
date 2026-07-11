@@ -93,14 +93,18 @@ test("persists selected stops across a reload", async ({ page }) => {
   await expect(page.getByRole("combobox", { name: "Origin" })).toHaveValue("Guelph Central GO");
 });
 
-test("shows the empty state for a stop pair with no service", async ({ page }) => {
-  // Two nearby local bus stops with no scheduled connection at 03:00
+test("shows the empty state when the date is beyond the schedule window", async ({ page }) => {
   await selectStop(page, "Origin", "Guelph Central", "Guelph Central GO");
-  await selectStop(page, "Destination", "Guelph Central", "Guelph Central GO Bus");
-  await page.getByLabel("Departure time").fill("03:00");
+  await selectStop(page, "Destination", "Union Station", "Union Station GO");
+
+  // GTFS feeds publish a few months ahead at most — a year out is reliably
+  // outside the schedule window, so the backend deterministically finds
+  // nothing (unlike a "quiet" stop pair, which depends on feed contents)
+  const future = new Date();
+  future.setFullYear(future.getFullYear() + 1);
+  await page.getByLabel("Date").fill(future.toISOString().slice(0, 10));
+  await page.getByLabel("Departure time").fill("09:00");
   await page.getByRole("button", { name: "Find routes" }).click();
 
-  await expect(
-    page.getByText(/No routes found|route(s)? found/i).first()
-  ).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/No routes found/i)).toBeVisible({ timeout: 60_000 });
 });

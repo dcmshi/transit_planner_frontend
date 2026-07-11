@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { HealthBanner } from "@/components/HealthBanner";
+import { AlertsBanner } from "@/components/AlertsBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
@@ -33,6 +34,7 @@ export default function RootLayout({
         <Providers>
           <ErrorBoundary>
             <HealthBanner />
+            <AlertsBanner />
             <header className="bg-green-700 text-white shadow-md">
               <div className="mx-auto max-w-5xl px-4 py-4 flex items-center gap-3">
                 <span className="text-xl font-bold tracking-tight">GO</span>

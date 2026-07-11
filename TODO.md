@@ -2,10 +2,99 @@
 
 Findings from a static read-through of all source files.
 
-**Status: all items addressed on 2026-07-10** — with regression tests where
-applicable (suite grew from 79 tests / 12 files to 128 tests / 21 files, all
-passing along with `eslint` and `tsc --noEmit`). Resolution notes are inline
-where the fix differs from the original suggestion.
+**First pass: all items addressed on 2026-07-10** — with regression tests
+where applicable (suite grew from 79 tests / 12 files to 128 tests / 21
+files, all passing along with `eslint` and `tsc --noEmit`). Resolution notes
+are inline where the fix differs from the original suggestion.
+
+**Second pass (same day, post-refactor + e2e):** re-read of the current code
+including the first pass's own changes. Baseline verified green (lint, tsc,
+128 unit tests, 5 e2e). **All items below addressed on 2026-07-10** — suite
+now 149 unit tests / 22 files plus the e2e suite; resolution notes inline.
+
+---
+
+## Second pass — findings (2026-07-10, all addressed)
+
+### Behavior
+
+- [x] **Stale AI explanation shown after unchecking "Include AI
+  explanation".** A disabled React Query still exposes its cached data, so
+  the panel survived turning the checkbox off.
+  *Fixed:* `useRoutes` gates the returned explanation on
+  `params?.explain === true`; the cache stays warm, so re-checking the box
+  restores it without a new LLM call. Regression tests cover off → null and
+  back on → cached value, no extra fetch.
+
+- [x] **Editing a StopSearch input after selecting keeps the stale
+  selection.** *Fixed:* any edit that diverges from the selected stop's name
+  clears the selection (`onChange(null)`), and the value-sync only overwrites
+  the text when a stop is *set* — so the user's typing is never wiped.
+  Regression test asserts both the cleared selection and the preserved text.
+
+### Robustness
+
+- [x] **Date/time inputs have unvalidated edge states.** *Fixed:* submit
+  validation requires both fields with specific messages ("Please choose a
+  travel date." / "Please choose a departure time."), keeps the past-date
+  check, and the form is `noValidate` so our messages own the UX (native
+  min-bubbles would also have blocked deliberate backdated same-day queries).
+  Tests cover empty date, empty time, past date, and the allowed past-time
+  today case.
+
+- [x] **`useSavedStops` trusts the persisted shape.** *Fixed:* `sanitizeStop`
+  accepts a stop only with string `stop_id`/`stop_name` and numeric
+  `lat`/`lon`, defaults `routes_served`, and drops anything else — a
+  malformed entry can no longer crash the map on every visit. Tests cover
+  missing coords, missing `routes_served`, and non-object values.
+
+- [x] **`AbortSignal.any` / `AbortSignal.timeout` have no fallback.**
+  *Fixed:* `withTimeout` degrades gracefully — no `timeout` support → plain
+  caller signal (no timeout), no `any` support → caller signal wins over the
+  timeout. Tests simulate both missing statics.
+
+### Polish / minor
+
+- [x] **`RouteMap` re-applies polyline data on every page render.**
+  *Fixed:* `useRoutePolyline` memoizes its GeoJSON on route identity,
+  settlement state, and a fingerprint of the resolved coordinates — stable
+  object identity across unrelated re-renders. Identity regression test
+  added.
+
+- [x] **`routeKeys` computed twice per render.** *Fixed:* `page.tsx` passes
+  its computed keys to `RouteList` via a new optional `routeKeys` prop
+  (RouteList still computes them as a fallback when rendered standalone).
+
+- [x] **Backdating the time on today's date shows already-departed trips.**
+  *Resolved as intentional:* the time input gets `min` (a picker nudge) when
+  the date is today, but submits are deliberately not blocked — the backend
+  returns the rest of the day's schedule from the chosen time, the e2e suite
+  relies on deterministic backdated queries, and a hard block would also have
+  made the past-date test flaky at midnight. Documented in the form comment
+  and covered by an "allows a past departure time today" test.
+
+- [x] **The e2e empty-state test can't fail.** *Fixed:* the test now queries
+  a date one year out — reliably beyond any GTFS schedule window — and
+  asserts the "No routes found" empty state specifically.
+
+### Docs
+
+- [x] **README e2e coverage** — added an end-to-end section (`bun run
+  test:e2e`, backend prerequisite, one-time `npx playwright install
+  chromium`, not wired into CI) and Playwright in the stack table.
+- [x] **`screenshot.png` refreshed** — captured from the live app via
+  Playwright (form, route card, polyline map, and the new alerts banner).
+
+### Enhancement
+
+- [x] **Live service data surfaced.** `GET /alerts` now feeds an
+  `AlertsBanner` under the health banner (capped at 3 headlines + "+N more" —
+  the live feed carries 20+ standing alerts, which dogfooding caught
+  swallowing the page), and delayed legs show "Running ~N min late — expected
+  HH:MM – HH:MM" from the per-leg GTFS-RT fields (`groupLegs` carries the
+  boarding leg's expected departure and the final leg's expected arrival
+  through merges). New `useAlerts` hook; tests for the banner states,
+  truncation, delay line, sub-minute suppression, and group merging.
 
 ---
 

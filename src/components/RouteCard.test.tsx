@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RouteCard } from "./RouteCard";
-import type { ScoredRoute, WalkLeg } from "@/lib/api";
+import type { ScoredRoute, TripLeg, WalkLeg } from "@/lib/api";
 
 function makeRoute(overrides: Partial<ScoredRoute> = {}): ScoredRoute {
   return {
@@ -23,6 +23,21 @@ const walkLeg: WalkLeg = {
   to_stop_name: "Stop B",
   distance_m: 150,
   walk_seconds: 120,
+};
+
+const tripLeg: TripLeg = {
+  kind: "trip",
+  from_stop_id: "A",
+  to_stop_id: "B",
+  from_stop_name: "Stop A",
+  to_stop_name: "Stop B",
+  trip_id: "T1",
+  route_id: "27",
+  service_id: "20260710",
+  departure_time: "09:00:00",
+  arrival_time: "09:30:00",
+  travel_seconds: 1800,
+  risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false },
 };
 
 describe("RouteCard", () => {
@@ -92,5 +107,30 @@ describe("RouteCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /route details/i }));
     fireEvent.click(screen.getByRole("button", { name: /route details/i }));
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("shows live delay and expected times on a delayed trip leg", () => {
+    const delayed: TripLeg = {
+      ...tripLeg,
+      live_delay_seconds: 420,
+      expected_departure: "09:07:00",
+      expected_arrival: "09:37:00",
+    };
+    render(<RouteCard route={makeRoute({ legs: [delayed] })} index={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+    expect(screen.getByText(/Running ~7 min late — expected 09:07 – 09:37/)).toBeInTheDocument();
+  });
+
+  it("shows no delay line for an on-time trip leg", () => {
+    render(<RouteCard route={makeRoute({ legs: [tripLeg] })} index={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+    expect(screen.queryByText(/late/i)).not.toBeInTheDocument();
+  });
+
+  it("shows no delay line for a sub-minute delay", () => {
+    const barelyLate: TripLeg = { ...tripLeg, live_delay_seconds: 45, expected_departure: "09:00:45" };
+    render(<RouteCard route={makeRoute({ legs: [barelyLate] })} index={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+    expect(screen.queryByText(/late/i)).not.toBeInTheDocument();
   });
 });

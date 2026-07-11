@@ -15,6 +15,9 @@ export function groupLegs(legs: (TripLeg | WalkLeg)[]): LegGroup[] {
       prev.to_stop_name = leg.to_stop_name;
       prev.arrival_time = leg.arrival_time;
       prev.travel_seconds += leg.travel_seconds;
+      // Live expected arrival tracks the merged group's final leg (the
+      // group's expected_departure stays the boarding leg's)
+      prev.expected_arrival = leg.expected_arrival;
       prev.intermediate_stops.push(leg);
     } else {
       groups.push(

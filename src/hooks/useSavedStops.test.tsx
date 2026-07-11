@@ -52,4 +52,34 @@ describe("useSavedStops", () => {
     const { result } = renderHook(() => useSavedStops());
     expect(result.current[0]).toEqual({ origin: null, destination: null });
   });
+
+  it("drops a persisted stop with missing coordinates but keeps the valid one", () => {
+    // Regression: a malformed stop used to flow into Marker.setLngLat and
+    // crash the map into the error screen on every visit
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ origin: { stop_id: "S1", stop_name: "A" }, destination: stop("S2", "B") }),
+    );
+    const { result } = renderHook(() => useSavedStops());
+    expect(result.current[0].origin).toBeNull();
+    expect(result.current[0].destination?.stop_id).toBe("S2");
+  });
+
+  it("defaults routes_served when the persisted stop lacks it", () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        origin: { stop_id: "S1", stop_name: "A", lat: 43.5, lon: -80.2 },
+        destination: null,
+      }),
+    );
+    const { result } = renderHook(() => useSavedStops());
+    expect(result.current[0].origin?.routes_served).toEqual([]);
+  });
+
+  it("rejects non-object persisted values", () => {
+    localStorage.setItem(KEY, JSON.stringify("surprise"));
+    const { result } = renderHook(() => useSavedStops());
+    expect(result.current[0]).toEqual({ origin: null, destination: null });
+  });
 });

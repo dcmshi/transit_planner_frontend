@@ -41,5 +41,10 @@ export function useRoutes(params: RouteParams | null) {
     retry: 1,
   });
 
-  return { ...routesQuery, explanation: explanationQuery.data?.explanation ?? null };
+  // Gate on the current explain flag — a disabled query still exposes its
+  // cached data, which would resurface an explanation the user turned off
+  const explanation =
+    params?.explain === true ? (explanationQuery.data?.explanation ?? null) : null;
+
+  return { ...routesQuery, explanation };
 }

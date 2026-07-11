@@ -1,6 +1,6 @@
 import type { ScoredRoute } from "@/lib/api";
 import { parseRecommendedIndex } from "@/lib/explanation";
-import { routeKeys } from "@/lib/routeKey";
+import { routeKeys as computeRouteKeys } from "@/lib/routeKey";
 import { ExplanationPanel } from "./ExplanationPanel";
 import { RouteCard } from "./RouteCard";
 
@@ -12,9 +12,11 @@ interface Props {
   isRefreshing?: boolean;
   selectedRouteIndex?: number | null;
   onSelectRoute?: (index: number) => void;
+  /** Stable per-route keys; computed here when the parent doesn't pass its own. */
+  routeKeys?: string[];
 }
 
-export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRefreshing, selectedRouteIndex, onSelectRoute }: Props) {
+export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRefreshing, selectedRouteIndex, onSelectRoute, routeKeys }: Props) {
   if (routes.length === 0) {
     return (
       <div className="mt-8 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
@@ -26,7 +28,7 @@ export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRef
 
   const recommendedIndex = explanation ? parseRecommendedIndex(explanation) : null;
   // Stable keys so expansion state survives refetches that reorder results
-  const keys = routeKeys(routes);
+  const keys = routeKeys ?? computeRouteKeys(routes);
 
   return (
     <div className="mt-6 flex flex-col gap-3">

@@ -37,6 +37,43 @@ describe("api.health", () => {
   });
 });
 
+describe("api.alerts", () => {
+  it("fetches /alerts", async () => {
+    mockFetch.mockResolvedValue(jsonResponse([]));
+    await expect(api.alerts()).resolves.toEqual([]);
+    expect(mockFetch.mock.calls[0][0]).toBe(`${API_BASE}/alerts`);
+  });
+});
+
+describe("withTimeout browser fallbacks", () => {
+  it("passes the caller's signal through when AbortSignal.any is unavailable", async () => {
+    const anyFn = AbortSignal.any;
+    (AbortSignal as unknown as Record<string, unknown>).any = undefined;
+    try {
+      mockFetch.mockResolvedValue(jsonResponse({ ok: true }));
+      const caller = new AbortController().signal;
+      await expect(api.health(caller)).resolves.toEqual({ ok: true });
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${API_BASE}/health`,
+        expect.objectContaining({ signal: caller }),
+      );
+    } finally {
+      (AbortSignal as unknown as Record<string, unknown>).any = anyFn;
+    }
+  });
+
+  it("still works when AbortSignal.timeout is unavailable", async () => {
+    const timeoutFn = AbortSignal.timeout;
+    (AbortSignal as unknown as Record<string, unknown>).timeout = undefined;
+    try {
+      mockFetch.mockResolvedValue(jsonResponse({ ok: true }));
+      await expect(api.health()).resolves.toEqual({ ok: true });
+    } finally {
+      (AbortSignal as unknown as Record<string, unknown>).timeout = timeoutFn;
+    }
+  });
+});
+
 describe("api.stops", () => {
   it("URL-encodes the search query", async () => {
     mockFetch.mockResolvedValue(jsonResponse([]));

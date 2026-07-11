@@ -36,19 +36,27 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
   }, []);
 
   // Sync display value when the external value changes (render-phase
-  // adjustment — https://react.dev/learn/you-might-not-need-an-effect)
+  // adjustment — https://react.dev/learn/you-might-not-need-an-effect).
+  // Only sync when a stop is set: a null value also arrives when the user
+  // edits the text below, and overwriting would wipe their typing.
   const [prevValue, setPrevValue] = useState(value);
   if (value !== prevValue) {
     setPrevValue(value);
-    setInputValue(value?.stop_name ?? "");
-    setFocusedIndex(-1);
+    if (value) {
+      setInputValue(value.stop_name);
+      setFocusedIndex(-1);
+    }
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setInputValue(e.target.value);
+    const text = e.target.value;
+    setInputValue(text);
     setOpen(true);
     setFocusedIndex(-1);
-    if (!e.target.value) onChange(null);
+    // Any edit that diverges from the selected stop's name clears the
+    // selection — otherwise the form would submit a stop the input no
+    // longer displays
+    if (value && text !== value.stop_name) onChange(null);
   }
 
   function handleSelect(stop: StopResult) {

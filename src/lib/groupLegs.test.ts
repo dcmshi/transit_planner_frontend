@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { groupLegs } from "./groupLegs";
+import { groupLegs, type TripLegGroup } from "./groupLegs";
 import type { TripLeg, WalkLeg } from "@/lib/api";
 
 function makeTripLeg(overrides: Partial<TripLeg> = {}): TripLeg {
@@ -83,5 +83,23 @@ describe("groupLegs", () => {
     const result = groupLegs([walk]);
     expect(result).toHaveLength(1);
     expect(result[0].kind).toBe("walk");
+  });
+
+  it("carries the boarding leg's expected departure and the final leg's expected arrival", () => {
+    const leg1 = makeTripLeg({
+      trip_id: "trip-1",
+      live_delay_seconds: 300,
+      expected_departure: "09:05:00",
+      expected_arrival: "09:35:00",
+    });
+    const leg2 = makeTripLeg({
+      trip_id: "trip-1",
+      arrival_time: "10:00:00",
+      expected_arrival: "10:05:00",
+    });
+    const [group] = groupLegs([leg1, leg2]) as TripLegGroup[];
+    expect(group.expected_departure).toBe("09:05:00");
+    expect(group.expected_arrival).toBe("10:05:00");
+    expect(group.live_delay_seconds).toBe(300);
   });
 });

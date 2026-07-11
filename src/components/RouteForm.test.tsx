@@ -156,6 +156,41 @@ describe("RouteForm", () => {
     expect(onSubmit).toHaveBeenCalledOnce();
   });
 
+  it("requires a travel date", () => {
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+    selectBothStops();
+
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "" } });
+    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/choose a travel date/i);
+  });
+
+  it("requires a departure time", () => {
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+    selectBothStops();
+
+    fireEvent.change(screen.getByLabelText("Departure time"), { target: { value: "" } });
+    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/choose a departure time/i);
+  });
+
+  it("allows a past departure time today (shows the rest of the day's schedule)", () => {
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+    selectBothStops();
+
+    fireEvent.change(screen.getByLabelText("Departure time"), { target: { value: "00:01" } });
+    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+
+    expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
   it("onOriginChange fires with the selected stop", () => {
     const onStopsChange = vi.fn();
     render(<Harness onStopsChange={onStopsChange} />);

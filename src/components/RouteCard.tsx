@@ -112,6 +112,15 @@ function TripGroupRow({ group }: { group: TripLegGroup }) {
             <span className="mx-1 text-gray-300">·</span>
             {formatDuration(group.travel_seconds)}
           </span>
+          {typeof group.live_delay_seconds === "number" &&
+            group.live_delay_seconds >= 60 &&
+            group.expected_departure && (
+              <span className="text-xs font-medium text-amber-700">
+                Running ~{Math.round(group.live_delay_seconds / 60)} min late — expected{" "}
+                {formatGtfsTime(group.expected_departure)}
+                {group.expected_arrival ? ` – ${formatGtfsTime(group.expected_arrival)}` : ""}
+              </span>
+            )}
           {hasStops && (
             <button
               onClick={() => setExpanded((v) => !v)}

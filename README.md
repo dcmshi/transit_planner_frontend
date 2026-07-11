@@ -16,6 +16,7 @@ Web UI for the [GO Transit Reliability Router](https://github.com/dcmshi/transit
 | Type generation | openapi-typescript |
 | Map | MapLibre GL JS + OpenFreeMap tiles |
 | Testing | Vitest + Testing Library (jsdom) |
+| E2E testing | Playwright (headless Chromium) |
 
 ## Prerequisites
 
@@ -51,21 +52,38 @@ bunx openapi-typescript http://localhost:8000/openapi.json -o src/types/api.ts
 ```bash
 bun run test          # run all tests once (vitest — plain `bun test` runs bun's own runner)
 bun run test:watch    # watch mode
+bun run test:e2e      # Playwright end-to-end suite (see prerequisites below)
 ```
 
-128 tests across 21 files covering utility functions, hooks, and all major components:
+### End-to-end tests
+
+`bun run test:e2e` drives the real app in headless Chromium against the live
+backend — stop search, route planning, selection, persistence across reloads,
+and the empty state. Prerequisites:
+
+- Backend stack running with GTFS data ingested — `docker compose up` in
+  [transit_planner](https://github.com/dcmshi/transit_planner)
+- One-time browser download: `npx playwright install chromium`
+
+The frontend dev server is started automatically (an already-running
+`bun dev` on :3000 is reused). Not wired into CI — it needs the backend.
+
+### Unit tests
+
+149 tests across 22 files covering utility functions, hooks, and all major components:
 
 | File | What it covers |
 |---|---|
 | `src/lib/format.test.ts` | `formatDuration`, `formatGtfsTime` (padding, past-midnight, malformed input), `formatDistance` |
 | `src/lib/explanation.test.ts` | `isExplanationAvailable`, `parseRecommendedIndex` |
 | `src/lib/groupLegs.test.ts` | consecutive same-trip leg merging |
-| `src/lib/api.test.ts` | 404 → empty routes mapping, explain flag, query encoding, timeout signal |
+| `src/lib/api.test.ts` | 404 → empty routes mapping, explain flag, query encoding, timeout signal, `/alerts`, older-browser AbortSignal fallbacks |
 | `src/lib/routeKey.test.ts` | stable route identity, duplicate disambiguation, reorder stability |
 | `src/lib/mapBounds.test.ts` | SW/NE corner ordering regardless of stop orientation |
 | `src/components/RiskBadge.test.tsx` | colour class per risk level |
 | `src/components/ExplanationPanel.test.tsx` | available vs. Ollama-unavailable states |
 | `src/components/HealthBanner.test.tsx` | all 5 health/data states |
+| `src/components/AlertsBanner.test.tsx` | hidden / single-alert / multi-alert states |
 | `src/components/StopSearch.test.tsx` | dropdown threshold, keyboard nav, Escape/ArrowDown edge cases, unique ids, selection, clear |
 | `src/components/LoadingRoutes.test.tsx` | spinner and loading text |
 | `src/components/RouteForm.test.tsx` | render, submit gating, payload shape, explain flag, controlled stops, past-date validation |
@@ -131,3 +149,16 @@ src/
 - `LoadingRoutes` announces loading state to screen readers via `role="status"`
 - `useHealth` continues polling at 5 min after healthy to detect subsequent degradation
 - Route polyline held in a ref during pending queries — map no longer flashes empty between route selections
+
+**v6 — Audit hardening**
+- Persisted stops restore into the form (controlled `RouteForm` + `useSavedStops`), StrictMode-safe storage writes
+- Route selection and React keys are identity-based — survive background refetches that reorder results
+- AI explanation fetched once per journey, excluded from the 5-minute background refresh
+- Select and expand are separate card actions; unique combobox ids; associated form labels
+- Playwright e2e suite against the live backend
+
+**v7 — Live service data**
+- Service-alert banner (`GET /alerts`) — disruption headlines above the app
+- Delayed legs show "Running ~N min late — expected HH:MM" from live GTFS-RT delays
+- Editing a stop input clears the stale selection; date/time validated on submit
+- Persisted stops validated on load; graceful API fallback for older browsers

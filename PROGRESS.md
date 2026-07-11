@@ -129,6 +129,36 @@ All items from the 2026-07-10 audit (see `TODO.md`) addressed:
 
 ---
 
+## v7 — Second Audit Pass + Live Service Data (2026-07-10)
+
+All items from the second frontend audit pass (see `TODO.md`) addressed:
+
+### Behavior fixes
+- [x] **Explanation gated on the explain flag** — unchecking "Include AI explanation" hides it again (cached for cheap re-enable)
+- [x] **Editing a stop input clears the stale selection** — text and submitted stop can no longer diverge
+
+### Robustness
+- [x] **Submit validation** for empty date, empty time, past date (form is `noValidate`; backdated same-day queries deliberately allowed)
+- [x] **Persisted stops validated on load** — malformed storage can't crash the map
+- [x] **AbortSignal fallbacks** for browsers without `timeout`/`any`
+
+### Polish
+- [x] Memoized polyline GeoJSON (stable identity across re-renders)
+- [x] `routeKeys` computed once and passed down
+- [x] Deterministic e2e empty-state test (date beyond the schedule window)
+
+### Live service data (new)
+- [x] **`AlertsBanner`** — active GTFS-RT service alerts via `GET /alerts`, capped at 3 headlines + "+N more"
+- [x] **Live delay display** — delayed legs show "Running ~N min late — expected HH:MM – HH:MM"
+
+### Docs
+- [x] README: e2e section, Playwright in stack table, v6/v7 feature notes
+- [x] `screenshot.png` recaptured from the live app
+
+**Test total: 149 across 22 files (+ 5 Playwright e2e)**
+
+---
+
 ## Out of Scope (future)
 
 - User accounts / saved journeys

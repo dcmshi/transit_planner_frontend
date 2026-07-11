@@ -147,6 +147,20 @@ describe("useRoutePolyline", () => {
     expect(result.current?.features).toHaveLength(0);
   });
 
+  it("returns the same object identity across re-renders with unchanged inputs", () => {
+    // The map effect keys on identity — a fresh object per render would
+    // re-apply setData on every unrelated page re-render
+    const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
+    mockUseQueries.mockReturnValue([]);
+    const { result, rerender } = renderHook(
+      ({ r }) => useRoutePolyline(r, originStop, destStop),
+      { initialProps: { r: route } },
+    );
+    const first = result.current;
+    rerender({ r: route });
+    expect(result.current).toBe(first);
+  });
+
   it("walk leg has kind='walk' and riskLabel=null; trip leg has kind='trip' with matching riskLabel", () => {
     const midStop: StopResult = { stop_id: "S3", stop_name: "Mid Stop", lat: 43.65, lon: -79.45, routes_served: [] };
     const route = makeRoute([
