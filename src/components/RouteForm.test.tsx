@@ -180,6 +180,13 @@ describe("RouteForm", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/choose a departure time/i);
   });
 
+  it("puts no min on the departure time input", () => {
+    // The old min was nowTime() captured at render: it went stale while the
+    // page sat open and contradicted the deliberate backdated-today case
+    render(<Harness />);
+    expect(screen.getByLabelText("Departure time")).not.toHaveAttribute("min");
+  });
+
   it("allows a past departure time today (shows the rest of the day's schedule)", () => {
     const onSubmit = vi.fn();
     render(<Harness onSubmit={onSubmit} />);

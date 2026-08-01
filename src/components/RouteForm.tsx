@@ -44,7 +44,8 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!origin || !destination) return;
-    // The inputs' min attributes don't stop typed or cleared values
+    // The date input's min doesn't stop typed or cleared values, and it is
+    // itself computed at render — re-check against the current date here
     if (!date) {
       setFormError("Please choose a travel date.");
       return;
@@ -58,7 +59,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
       return;
     }
     // A past time on today's date is allowed on purpose — it shows the rest
-    // of today's schedule from that point (the min attribute only nudges).
+    // of today's schedule from that point.
     onSubmit({
       origin: origin.stop_id,
       destination: destination.stop_id,
@@ -102,11 +103,13 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
           </div>
           <div className="flex flex-1 flex-col gap-1">
             <label htmlFor={timeId} className="text-sm font-medium text-gray-700">Departure time</label>
+            {/* No min: it was computed at render, so it went stale as the page
+                sat open, and backdated same-day departures are allowed on
+                purpose (see handleSubmit) — the constraint only misled. */}
             <input
               id={timeId}
               type="time"
               value={time}
-              min={date === todayDate() ? nowTime() : undefined}
               onChange={(e) => { setTime(e.target.value); setFormError(null); }}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
             />
