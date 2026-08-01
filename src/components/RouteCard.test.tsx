@@ -115,6 +115,22 @@ describe("RouteCard", () => {
     expect(screen.getByText("Walk 150 m")).toBeInTheDocument();
   });
 
+  it("gives both card buttons a 44px minimum touch target", () => {
+    render(<RouteCard route={makeRoute()} index={1} />);
+    const summary = screen.getByRole("button", { name: /#1/ });
+    const details = screen.getByRole("button", { name: /route details/i });
+    expect(summary.className).toContain("min-h-11");
+    expect(details.className).toContain("min-h-11");
+    expect(details.className).toContain("min-w-11");
+  });
+
+  it("uses a chevron colour that clears contrast on white", () => {
+    render(<RouteCard route={makeRoute()} index={1} />);
+    const details = screen.getByRole("button", { name: /route details/i });
+    expect(details.className).toContain("text-gray-500");
+    expect(details.className).not.toContain("text-gray-400");
+  });
+
   it("marks the walk leg with an SVG icon rather than an emoji", () => {
     const { container } = render(
       <RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} />

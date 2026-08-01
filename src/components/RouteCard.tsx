@@ -47,7 +47,7 @@ export function RouteCard({ route, index, recommended = false, isSelected, onSel
           type="button"
           onClick={() => onSelect?.()}
           aria-pressed={isSelected}
-          className="flex flex-1 items-center justify-between gap-3 px-5 py-4 text-left"
+          className="flex min-h-11 flex-1 items-center justify-between gap-3 px-5 py-4 text-left"
         >
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-xs font-semibold text-gray-400 w-5">#{index}</span>
@@ -77,7 +77,7 @@ export function RouteCard({ route, index, recommended = false, isSelected, onSel
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
           aria-label={expanded ? "Hide route details" : "Show route details"}
-          className="flex items-center px-4 text-gray-400 hover:text-gray-600"
+          className="flex min-h-11 min-w-11 items-center justify-center px-4 text-gray-500 hover:text-gray-800"
         >
           <svg
             className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
