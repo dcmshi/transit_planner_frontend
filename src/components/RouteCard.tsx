@@ -6,6 +6,7 @@ import { groupLegs, type TripLegGroup } from "@/lib/groupLegs";
 import { RiskBadge } from "./RiskBadge";
 import { formatDuration, formatGtfsTime, formatDistance } from "@/lib/format";
 import { routeLabel } from "@/lib/routeName";
+import { routeTimes } from "@/lib/routeTimes";
 
 interface Props {
   route: ScoredRoute;
@@ -18,6 +19,7 @@ interface Props {
 export function RouteCard({ route, index, recommended = false, isSelected, onSelect }: Props) {
   const [expanded, setExpanded] = useState(false);
   const groups = groupLegs(route.legs);
+  const times = routeTimes(route);
 
   // Green is the brand accent and belongs to "Recommended"; selection uses a
   // neutral dark ring so a card can be both without two accents competing
@@ -46,12 +48,17 @@ export function RouteCard({ route, index, recommended = false, isSelected, onSel
           aria-pressed={isSelected}
           className="flex flex-1 items-center justify-between gap-3 px-5 py-4 text-left"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="text-xs font-semibold text-gray-400 w-5">#{index}</span>
             <RiskBadge label={route.risk_label} />
             <span className="text-base font-semibold text-gray-900">
               {formatDuration(route.total_travel_seconds)}
             </span>
+            {times && (
+              <span className="text-sm tabular-nums text-gray-500">
+                {formatGtfsTime(times.departure)} → {formatGtfsTime(times.arrival)}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-500">
             {route.transfers > 0 && (

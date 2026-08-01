@@ -74,6 +74,18 @@ describe("RouteCard", () => {
     expect(screen.queryByText("Recommended")).not.toBeInTheDocument();
   });
 
+  it("shows depart to arrive times in the collapsed summary row", () => {
+    render(<RouteCard route={makeRoute({ legs: [tripLeg] })} index={1} />);
+    // Visible without expanding — the point is comparing options at a glance
+    expect(screen.getByRole("button", { name: /route details/i })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("09:00 → 09:30")).toBeInTheDocument();
+  });
+
+  it("omits the summary times for a route with no trip legs", () => {
+    render(<RouteCard route={makeRoute({ legs: [walkLeg] })} index={1} />);
+    expect(screen.queryByText(/→/)).not.toBeInTheDocument();
+  });
+
   it("marks selection with a neutral dark ring, not a second accent colour", () => {
     render(<RouteCard route={makeRoute()} index={1} isSelected />);
     const card = screen.getByTestId("route-card");
