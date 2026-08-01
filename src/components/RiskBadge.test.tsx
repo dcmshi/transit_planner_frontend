@@ -23,4 +23,18 @@ describe("RiskBadge", () => {
     expect(badge).toBeInTheDocument();
     expect(badge.className).toContain("red");
   });
+
+  it("falls back to neutral styling for an unrecognised label", () => {
+    render(<RiskBadge label="Severe" />);
+    const badge = screen.getByText("Severe risk");
+    expect(badge).toBeInTheDocument();
+    expect(badge.className).toContain("bg-gray-100");
+    expect(badge.className).toContain("text-gray-700");
+  });
+
+  it("never emits 'undefined' in the class list", () => {
+    render(<RiskBadge label="" />);
+    const badge = screen.getByText("risk");
+    expect(badge.className).not.toContain("undefined");
+  });
 });
