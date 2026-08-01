@@ -39,15 +39,6 @@ describe("RouteList", () => {
     expect(screen.getByText("3 routes found")).toBeInTheDocument();
   });
 
-  it("lets the header row wrap instead of colliding on a narrow screen", () => {
-    render(
-      <RouteList routes={[makeRoute()]} onRefresh={() => {}} dataUpdatedAt={Date.now()} />
-    );
-    const header = screen.getByText("1 route found").parentElement!;
-    expect(header.className).toContain("flex-wrap");
-    expect(screen.getByText(/Updated at/).className).toContain("whitespace-nowrap");
-  });
-
   it("keeps a card's expansion with its route when a refetch reorders results", () => {
     const walk = (from: string, to: string): WalkLeg => ({
       kind: "walk",

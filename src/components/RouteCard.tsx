@@ -34,6 +34,9 @@ export function RouteCard({ route, index, recommended = false, isSelected, onSel
   return (
     <div
       data-testid="route-card"
+      // State as data, not colour — the styling above is free to change
+      data-selected={isSelected ? "true" : "false"}
+      data-recommended={recommended ? "true" : "false"}
       className={`rounded-xl border bg-white shadow-sm overflow-hidden ${borderClass}`}
     >
       {recommended && (
@@ -116,7 +119,7 @@ function TripGroupRow({ group }: { group: TripLegGroup }) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-0.5 min-w-0">
           {label.prominent && (
-            <span className="text-xs font-bold uppercase tracking-wider text-green-700">
+            <span data-route-label="prominent" className="text-xs font-bold uppercase tracking-wider text-green-700">
               {label.text}
             </span>
           )}
@@ -131,7 +134,7 @@ function TripGroupRow({ group }: { group: TripLegGroup }) {
             {formatDuration(group.travel_seconds)}
           </span>
           {!label.prominent && (
-            <span className="text-xs text-gray-400">{label.text}</span>
+            <span data-route-label="demoted" className="text-xs text-gray-400">{label.text}</span>
           )}
           {typeof group.live_delay_seconds === "number" &&
             group.live_delay_seconds >= 60 &&

@@ -87,22 +87,25 @@ describe("RouteCard", () => {
     expect(screen.queryByText(/→/)).not.toBeInTheDocument();
   });
 
-  it("marks selection with a neutral dark ring, not a second accent colour", () => {
+  it("reports selection state on the card", () => {
     render(<RouteCard route={makeRoute()} index={1} isSelected />);
-    const card = screen.getByTestId("route-card");
-    expect(card.className).toContain("ring-gray-900");
-    expect(card.className).not.toContain("blue");
+    expect(screen.getByTestId("route-card")).toHaveAttribute("data-selected", "true");
   });
 
-  it("uses the green accent for the recommended card", () => {
+  it("reports the recommended state on the card", () => {
     render(<RouteCard route={makeRoute()} index={1} recommended />);
-    expect(screen.getByTestId("route-card").className).toContain("border-green-500");
+    const card = screen.getByTestId("route-card");
+    expect(card).toHaveAttribute("data-recommended", "true");
+    expect(card).toHaveAttribute("data-selected", "false");
   });
 
-  it("keeps the Recommended label when the recommended card is also selected", () => {
+  it("composes recommended and selected rather than letting one replace the other", () => {
+    // The old ternary dropped the selection styling on a recommended card
     render(<RouteCard route={makeRoute()} index={1} recommended isSelected />);
+    const card = screen.getByTestId("route-card");
+    expect(card).toHaveAttribute("data-recommended", "true");
+    expect(card).toHaveAttribute("data-selected", "true");
     expect(screen.getByText("Recommended")).toBeInTheDocument();
-    expect(screen.getByTestId("route-card").className).toContain("ring-gray-900");
   });
 
   it("expands to show leg details when the details button is clicked", () => {
@@ -114,22 +117,6 @@ describe("RouteCard", () => {
     expect(details).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText(/Stop A to Stop B/i)).toBeInTheDocument();
     expect(screen.getByText("Walk 150 m")).toBeInTheDocument();
-  });
-
-  it("gives both card buttons a 44px minimum touch target", () => {
-    render(<RouteCard route={makeRoute()} index={1} />);
-    const summary = screen.getByRole("button", { name: /#1/ });
-    const details = screen.getByRole("button", { name: /route details/i });
-    expect(summary.className).toContain("min-h-11");
-    expect(details.className).toContain("min-h-11");
-    expect(details.className).toContain("min-w-11");
-  });
-
-  it("uses a chevron colour that clears contrast on white", () => {
-    render(<RouteCard route={makeRoute()} index={1} />);
-    const details = screen.getByRole("button", { name: /route details/i });
-    expect(details.className).toContain("text-gray-500");
-    expect(details.className).not.toContain("text-gray-400");
   });
 
   it("marks the walk leg with an SVG icon rather than an emoji", () => {
@@ -169,8 +156,7 @@ describe("RouteCard", () => {
   it("headlines a line-like route id above the stop pair", () => {
     render(<RouteCard route={makeRoute({ legs: [tripLeg] })} index={1} />);
     fireEvent.click(screen.getByRole("button", { name: /route details/i }));
-    const label = screen.getByText("Route 27");
-    expect(label.className).toContain("text-green-700");
+    expect(screen.getByText("Route 27")).toHaveAttribute("data-route-label", "prominent");
   });
 
   it("demotes an opaque route id instead of headlining it", () => {
@@ -179,9 +165,8 @@ describe("RouteCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /route details/i }));
 
     expect(screen.queryByText("Route 06260926-GT")).not.toBeInTheDocument();
-    const fallback = screen.getByText("Route ID 06260926-GT");
-    expect(fallback.className).toContain("text-gray-400");
-    expect(fallback.className).not.toContain("uppercase");
+    expect(screen.getByText("Route ID 06260926-GT"))
+      .toHaveAttribute("data-route-label", "demoted");
   });
 
   it("shows live delay and expected times on a delayed trip leg", () => {

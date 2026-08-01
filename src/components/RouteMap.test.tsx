@@ -91,12 +91,10 @@ beforeEach(() => {
 });
 
 describe("RouteMap", () => {
-  it("sizes itself with responsive classes rather than a fixed inline height", () => {
+  it("takes its height from CSS rather than an inline style", () => {
+    // The rendered size is measured for real in mobile-layout.spec.ts
     render(<RouteMap origin={origin} destination={destination} />);
-    const container = screen.getByTestId("route-map");
-    expect(container.style.height).toBe("");
-    expect(container.className).toContain("h-72");
-    expect(container.className).toContain("lg:h-[480px]");
+    expect(screen.getByTestId("route-map").style.height).toBe("");
   });
 
   it("shows a fallback when the basemap fails before load", () => {

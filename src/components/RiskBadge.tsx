@@ -9,8 +9,14 @@ const styles: Record<string, string> = {
 const NEUTRAL = "bg-gray-100 text-gray-700";
 
 export function RiskBadge({ label }: { label: string }) {
+  const known = label in styles;
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${styles[label] ?? NEUTRAL}`}>
+    <span
+      // Severity as data rather than colour, so tests assert the state and
+      // leave the palette free to change
+      data-risk={known ? label : "unknown"}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${styles[label] ?? NEUTRAL}`}
+    >
       {label} risk
     </span>
   );
