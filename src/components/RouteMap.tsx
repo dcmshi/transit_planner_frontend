@@ -117,8 +117,8 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
   return (
     <div
       ref={containerRef}
-      className="w-full rounded-xl overflow-hidden border border-gray-200 shadow-sm"
-      style={{ height: "480px" }}
+      data-testid="route-map"
+      className="h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]"
     />
   );
 }
