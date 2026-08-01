@@ -37,8 +37,10 @@ export default function Home() {
   const selectedRoute = selectedIndex >= 0 ? (data?.routes[selectedIndex] ?? null) : null;
 
   return (
-    <div className="flex flex-col lg:flex-row lg:gap-6 lg:items-start">
-      <div className="flex-1 min-w-0 flex flex-col gap-6">
+    // Two columns from lg up; one below, where source order puts the map
+    // directly under the form instead of behind a full-length results list
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
+      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
         <RouteForm
           onSubmit={handleSubmit}
           isLoading={isFetching}
@@ -50,7 +52,17 @@ export default function Home() {
           explain={explain}
           onExplainChange={setExplain}
         />
+      </div>
 
+      <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-6 lg:self-start">
+        <RouteMap
+          origin={stops.origin}
+          destination={stops.destination}
+          selectedRoute={selectedRoute}
+        />
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-2">
         {isError && (
           <p className="text-sm text-red-600">
             Failed to fetch routes. Please try again.
@@ -83,14 +95,6 @@ export default function Home() {
             routeKeys={keys}
           />
         )}
-      </div>
-
-      <div className="lg:w-[420px] lg:sticky lg:top-6 lg:self-start">
-        <RouteMap
-          origin={stops.origin}
-          destination={stops.destination}
-          selectedRoute={selectedRoute}
-        />
       </div>
     </div>
   );

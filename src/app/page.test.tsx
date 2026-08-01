@@ -105,6 +105,25 @@ describe("Home page", () => {
     expect(mockUseRoutes.mock.calls.at(-1)?.[0]).toBeNull();
   });
 
+  it("puts the map ahead of the results in source order for the mobile stack", () => {
+    mockUseRoutes.mockReturnValue({
+      data: { routes: [{
+        legs: [], total_travel_seconds: 3600, transfers: 0,
+        total_walk_metres: 0, risk_score: 0.1, risk_label: "Low",
+      }] },
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+      dataUpdatedAt: 1,
+      explanation: null,
+    } as unknown as ReturnType<typeof useRoutes>);
+    render(<Home />);
+
+    const map = screen.getByTestId("route-map");
+    const results = screen.getByText("1 route found");
+    expect(map.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("resets the route selection to the first route when a new query is submitted", async () => {
     localStorage.setItem("go-transit-last-stops", JSON.stringify({ origin, destination }));
     const makeRoute = () => ({
