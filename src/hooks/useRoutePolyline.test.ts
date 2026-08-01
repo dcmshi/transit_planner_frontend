@@ -1,63 +1,44 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { useQueries, type UseQueryResult } from "@tanstack/react-query";
 import { useRoutePolyline } from "./useRoutePolyline";
-import type { ScoredRoute, StopResult, WalkLeg, TripLeg } from "@/lib/api";
+import type { ScoredRoute, WalkLeg, TripLeg } from "@/lib/api";
 
-type StopQueryResult = UseQueryResult<StopResult[]>;
-function q(partial: Partial<StopQueryResult>): StopQueryResult {
-  return partial as unknown as StopQueryResult;
-}
-
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return { ...actual, useQueries: vi.fn() };
-});
-
-const mockUseQueries = vi.mocked(useQueries);
-
-const originStop: StopResult = {
-  stop_id: "S1",
-  stop_name: "Origin Stop",
-  lat: 43.6,
-  lon: -79.4,
-  routes_served: [],
-};
-
-const destStop: StopResult = {
-  stop_id: "S2",
-  stop_name: "Dest Stop",
-  lat: 43.7,
-  lon: -79.5,
-  routes_served: [],
-};
-
-function makeWalkLeg(fromId: string, fromName: string, toId: string, toName: string): WalkLeg {
+function makeWalkLeg(overrides: Partial<WalkLeg> = {}): WalkLeg {
   return {
     kind: "walk",
-    from_stop_id: fromId,
-    to_stop_id: toId,
-    from_stop_name: fromName,
-    to_stop_name: toName,
+    from_stop_id: "S1",
+    to_stop_id: "S2",
+    from_stop_name: "Origin Stop",
+    to_stop_name: "Dest Stop",
+    from_lat: 43.6,
+    from_lon: -79.4,
+    to_lat: 43.7,
+    to_lon: -79.5,
     distance_m: 200,
     walk_seconds: 150,
+    ...overrides,
   };
 }
 
-function makeTripLeg(fromId: string, fromName: string, toId: string, toName: string, riskLabel: "Low" | "Medium" | "High" = "Low"): TripLeg {
+function makeTripLeg(overrides: Partial<TripLeg> = {}): TripLeg {
   return {
     kind: "trip",
-    from_stop_id: fromId,
-    to_stop_id: toId,
-    from_stop_name: fromName,
-    to_stop_name: toName,
+    from_stop_id: "S1",
+    to_stop_id: "S2",
+    from_stop_name: "Origin Stop",
+    to_stop_name: "Dest Stop",
+    from_lat: 43.6,
+    from_lon: -79.4,
+    to_lat: 43.7,
+    to_lon: -79.5,
     trip_id: "T1",
     route_id: "31",
     service_id: "SVC1",
     departure_time: "09:00:00",
     arrival_time: "09:30:00",
     travel_seconds: 1800,
-    risk: { risk_score: 0.1, risk_label: riskLabel, modifiers: [], is_cancelled: false },
+    risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false },
+    ...overrides,
   };
 }
 
@@ -72,141 +53,78 @@ function makeRoute(legs: ScoredRoute["legs"]): ScoredRoute {
   };
 }
 
-beforeEach(() => {
-  mockUseQueries.mockReturnValue([]);
-});
-
 describe("useRoutePolyline", () => {
-  it("returns null when route is null", () => {
-    mockUseQueries.mockReturnValue([]);
-    const { result } = renderHook(() => useRoutePolyline(null, originStop, destStop));
+  it("returns null when no route is selected", () => {
+    const { result } = renderHook(() => useRoutePolyline(null));
     expect(result.current).toBeNull();
   });
 
-  it("returns undefined (keep current polyline) while a query is pending", () => {
-    const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
-    mockUseQueries.mockReturnValue([q({ isPending: true, data: undefined })]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    expect(result.current).toBeUndefined();
-  });
-
-  it("excludes stops with names below the search minimum so they never block settling", () => {
-    // Regression: a <2-char name used to create a permanently-disabled (and
-    // therefore permanently-pending) query that froze the polyline forever
-    const route = makeRoute([
-      makeTripLeg("S1", "Origin Stop", "SX", "A"), // 1-char stop name
-      makeTripLeg("SX", "A", "S2", "Dest Stop"),
-    ]);
-    mockUseQueries.mockReturnValue([]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    // No query was requested for the unfetchable stop…
-    const lastCall = mockUseQueries.mock.calls.at(-1)?.[0] as { queries: unknown[] } | undefined;
-    expect(lastCall?.queries ?? []).toHaveLength(0);
-    // …and the hook settles instead of returning undefined forever
-    expect(result.current).not.toBeUndefined();
+  it("builds a FeatureCollection from the coordinates on each leg", () => {
+    const { result } = renderHook(() => useRoutePolyline(makeRoute([makeWalkLeg()])));
     expect(result.current?.type).toBe("FeatureCollection");
-  });
-
-  it("issues one search per distinct stop name, not per stop id", () => {
-    // Platforms at one station share a name; keying the query by stop id used
-    // to fire the identical /stops search once per platform
-    const route = makeRoute([
-      makeTripLeg("S1", "Origin Stop", "P1", "Bramalea GO"),
-      makeTripLeg("P1", "Bramalea GO", "P2", "Bramalea GO"),
-      makeTripLeg("P2", "Bramalea GO", "S2", "Dest Stop"),
-    ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: [] })]);
-    renderHook(() => useRoutePolyline(route, originStop, destStop));
-
-    const lastCall = mockUseQueries.mock.calls.at(-1)?.[0] as unknown as
-      | { queries: { queryKey: unknown[] }[] }
-      | undefined;
-    const queries = lastCall?.queries ?? [];
-    expect(queries).toHaveLength(1);
-    expect(queries[0].queryKey).toEqual(["stops-search", "Bramalea GO"]);
-  });
-
-  it("resolves each platform's own coordinates from the shared search result", () => {
-    const p1: StopResult = { stop_id: "P1", stop_name: "Bramalea GO", lat: 43.70, lon: -79.72, routes_served: [] };
-    const p2: StopResult = { stop_id: "P2", stop_name: "Bramalea GO", lat: 43.71, lon: -79.73, routes_served: [] };
-    const route = makeRoute([
-      makeTripLeg("P1", "Bramalea GO", "P2", "Bramalea GO"),
-    ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: [p1, p2] })]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-
+    // GeoJSON order is [lon, lat], not the [lat, lon] the API reports
     expect(result.current?.features[0]?.geometry.coordinates).toEqual([
-      [-79.72, 43.70],
-      [-79.73, 43.71],
+      [-79.4, 43.6],
+      [-79.5, 43.7],
     ]);
   });
 
-  it("returns a FeatureCollection when all queries settled", () => {
-    const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
-    mockUseQueries.mockReturnValue([]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    expect(result.current).not.toBeNull();
-    expect(result.current?.type).toBe("FeatureCollection");
+  it("issues no requests — coordinates arrive with the route", () => {
+    // Regression: intermediate stops used to be resolved one /stops search at
+    // a time, five of them on a Guelph-to-Union route
+    const fetchSpy = globalThis.fetch;
+    let called = false;
+    globalThis.fetch = (() => { called = true; throw new Error("unexpected fetch"); }) as typeof fetch;
+    try {
+      renderHook(() => useRoutePolyline(makeRoute([makeTripLeg(), makeWalkLeg()])));
+    } finally {
+      globalThis.fetch = fetchSpy;
+    }
+    expect(called).toBe(false);
   });
 
-  it("uses origin/destination coords directly without a query result", () => {
-    const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
-    mockUseQueries.mockReturnValue([]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    const feature = result.current?.features[0];
-    expect(feature?.geometry.coordinates[0]).toEqual([-79.4, 43.6]);
-    expect(feature?.geometry.coordinates[1]).toEqual([-79.5, 43.7]);
-  });
-
-  it("uses intermediate stop coords from query result data", () => {
-    const midStop: StopResult = { stop_id: "S3", stop_name: "Mid Stop", lat: 43.65, lon: -79.45, routes_served: [] };
+  it("skips a leg whose coordinates are missing", () => {
     const route = makeRoute([
-      makeTripLeg("S1", "Origin Stop", "S3", "Mid Stop"),
-      makeTripLeg("S3", "Mid Stop", "S2", "Dest Stop"),
+      makeWalkLeg({ to_lat: null, to_lon: null }),
+      makeWalkLeg({ from_stop_id: "S2", to_stop_id: "S3" }),
     ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: [midStop] })]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    expect(result.current).not.toBeNull();
-    expect(result.current?.features).toHaveLength(2);
+    const { result } = renderHook(() => useRoutePolyline(route));
+    expect(result.current?.features).toHaveLength(1);
   });
 
-  it("skips a leg when coord is missing", () => {
-    const route = makeRoute([
-      makeWalkLeg("S1", "Origin Stop", "S_UNKNOWN", "Unknown Stop"),
-      makeWalkLeg("S_UNKNOWN", "Unknown Stop", "S2", "Dest Stop"),
-    ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: [] })]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    // Both legs involve S_UNKNOWN which has no coord, so they are skipped
+  it("skips a leg with no coordinate fields at all", () => {
+    const bare = makeWalkLeg();
+    delete bare.from_lat;
+    delete bare.from_lon;
+    const { result } = renderHook(() => useRoutePolyline(makeRoute([bare])));
     expect(result.current?.features).toHaveLength(0);
   });
 
-  it("returns the same object identity across re-renders with unchanged inputs", () => {
+  it("tags trip legs with their risk label and walk legs with null", () => {
+    const route = makeRoute([
+      makeTripLeg({ risk: { risk_score: 0.9, risk_label: "High", modifiers: [], is_cancelled: false } }),
+      makeWalkLeg(),
+    ]);
+    const { result } = renderHook(() => useRoutePolyline(route));
+    const features = result.current?.features ?? [];
+    expect(features.find((f) => f.properties.kind === "trip")?.properties.riskLabel).toBe("High");
+    expect(features.find((f) => f.properties.kind === "walk")?.properties.riskLabel).toBeNull();
+  });
+
+  it("defaults a trip leg with no risk to Low", () => {
+    const { result } = renderHook(() => useRoutePolyline(makeRoute([makeTripLeg({ risk: null })])));
+    expect(result.current?.features[0]?.properties.riskLabel).toBe("Low");
+  });
+
+  it("returns the same object identity across re-renders with an unchanged route", () => {
     // The map effect keys on identity — a fresh object per render would
     // re-apply setData on every unrelated page re-render
-    const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
-    mockUseQueries.mockReturnValue([]);
-    const { result, rerender } = renderHook(
-      ({ r }) => useRoutePolyline(r, originStop, destStop),
-      { initialProps: { r: route } },
-    );
+    const route = makeRoute([makeWalkLeg()]);
+    const { result, rerender } = renderHook(({ r }) => useRoutePolyline(r), {
+      initialProps: { r: route },
+    });
     const first = result.current;
     rerender({ r: route });
     expect(result.current).toBe(first);
-  });
-
-  it("walk leg has kind='walk' and riskLabel=null; trip leg has kind='trip' with matching riskLabel", () => {
-    const midStop: StopResult = { stop_id: "S3", stop_name: "Mid Stop", lat: 43.65, lon: -79.45, routes_served: [] };
-    const route = makeRoute([
-      makeTripLeg("S1", "Origin Stop", "S3", "Mid Stop", "High"),
-      makeWalkLeg("S3", "Mid Stop", "S2", "Dest Stop"),
-    ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: [midStop] })]);
-    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
-    const features = result.current?.features ?? [];
-    const tripFeature = features.find((f) => f.properties.kind === "trip");
-    const walkFeature = features.find((f) => f.properties.kind === "walk");
-    expect(tripFeature?.properties.riskLabel).toBe("High");
-    expect(walkFeature?.properties.riskLabel).toBeNull();
   });
 });

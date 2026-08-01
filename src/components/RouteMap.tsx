@@ -22,7 +22,7 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
 
-  const geojson = useRoutePolyline(selectedRoute ?? null, origin, destination);
+  const geojson = useRoutePolyline(selectedRoute ?? null);
 
   // Initialise map on mount
   useEffect(() => {
@@ -88,9 +88,6 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
-    // undefined = coordinate lookups in flight — keep the current polyline
-    // so the map doesn't flash empty between route selections
-    if (geojson === undefined) return;
     const source = map.getSource("route-polyline") as maplibregl.GeoJSONSource | undefined;
     if (!source) return;
     source.setData(geojson ?? { type: "FeatureCollection", features: [] });
