@@ -2,9 +2,10 @@ import type { components, operations } from "@/types/api";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-// Route scoring can take up to a minute on a cold backend cache; time out
-// rather than hanging forever if the backend stalls.
-const REQUEST_TIMEOUT_MS = 90_000;
+// Route scoring can take a while on a cold backend cache; time out rather
+// than hanging forever if the backend stalls. Exported so the loading copy
+// quotes the same number instead of drifting from it.
+export const REQUEST_TIMEOUT_MS = 90_000;
 
 function withTimeout(signal?: AbortSignal): AbortSignal | undefined {
   // AbortSignal.timeout/any need Chrome 116+ / Firefox 124+ / Safari 17.4+ —

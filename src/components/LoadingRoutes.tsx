@@ -1,3 +1,7 @@
+import { REQUEST_TIMEOUT_MS } from "@/lib/api";
+
+const TIMEOUT_SECONDS = Math.round(REQUEST_TIMEOUT_MS / 1000);
+
 export function LoadingRoutes() {
   return (
     <div role="status" className="mt-8 flex flex-col items-center gap-4 py-12 text-center">
@@ -5,7 +9,7 @@ export function LoadingRoutes() {
       <div>
         <p className="text-sm font-medium text-gray-700">Finding the best routes…</p>
         <p className="mt-1 text-xs text-gray-400">
-          Scoring reliability across all legs — this can take up to a minute.
+          Scoring reliability across all legs — this can take up to {TIMEOUT_SECONDS} seconds.
         </p>
       </div>
     </div>
