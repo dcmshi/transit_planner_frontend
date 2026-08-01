@@ -6,6 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { ScoredRoute, StopResult } from "@/lib/api";
 import { stopBounds } from "@/lib/mapBounds";
 import { useRoutePolyline } from "@/hooks/useRoutePolyline";
+import { routeSummary } from "@/lib/routeSummary";
 
 interface Props {
   origin: StopResult | null;
@@ -130,8 +131,14 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
     <div className="flex flex-col gap-2">
       <div
         data-testid="route-map"
+        role="region"
+        aria-label="Route map"
         className="relative h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]"
       >
+        {/* The canvas conveys the route visually only */}
+        <p className="sr-only">
+          {selectedRoute ? routeSummary(selectedRoute) : "No route selected."}
+        </p>
         <div ref={containerRef} className="h-full w-full" />
         {loadFailed && (
           <div

@@ -110,6 +110,21 @@ describe("RouteMap", () => {
     consoleError.mockRestore();
   });
 
+  it("exposes the selected route as text inside a labelled region", () => {
+    render(<RouteMap origin={origin} destination={destination} selectedRoute={route} />);
+    const region = screen.getByRole("region", { name: "Route map" });
+    expect(region).toHaveTextContent(
+      "Route 31 from Guelph Central GO at 06:26 to Union Station GO at 07:47"
+    );
+  });
+
+  it("says so when no route is selected", () => {
+    render(<RouteMap origin={origin} destination={destination} />);
+    expect(screen.getByRole("region", { name: "Route map" })).toHaveTextContent(
+      "No route selected."
+    );
+  });
+
   it("captions the polyline as stop-to-stop rather than true track geometry", () => {
     render(<RouteMap origin={origin} destination={destination} selectedRoute={route} />);
     expect(screen.getByText(/not the rail alignment/i)).toBeInTheDocument();
