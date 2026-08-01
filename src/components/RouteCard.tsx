@@ -8,6 +8,7 @@ import { formatDuration, formatGtfsTime, formatDistance } from "@/lib/format";
 import { routeLabel } from "@/lib/routeName";
 import { routeTimes } from "@/lib/routeTimes";
 import { WalkIcon } from "./icons";
+import { RiskBasisPanel } from "./RiskBasisPanel";
 
 interface Props {
   route: ScoredRoute;
@@ -178,6 +179,8 @@ function TripGroupRow({ group }: { group: TripLegGroup }) {
       {group.risk?.modifiers && group.risk.modifiers.length > 0 && (
         <p className="mt-1.5 text-xs text-gray-400 italic">{group.risk.modifiers.join(" · ")}</p>
       )}
+
+      {group.risk && <RiskBasisPanel risk={group.risk} />}
     </li>
   );
 }
