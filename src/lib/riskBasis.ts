@@ -46,14 +46,21 @@ function humanizeSource(source: string | null): string {
  * the score actually shown rather than a bucket the client guessed at.
  */
 export function riskBasis(risk: LiveRisk): RiskBasis {
-  const { scheduled_departures: scheduled, observed_departures: observed } = risk;
+  // The counters are floats, not integers — the backend pro-rates them across
+  // buckets, so a weekend figure arrives as 17.13051275419115. Round for
+  // display, and derive the share from the rounded pair so the numbers on
+  // screen agree with the percentage beside them.
+  const scheduled = Math.round(risk.scheduled_departures);
+  const observed = Math.round(risk.observed_departures);
   return {
     bucketLabel: humanizeBucket(risk.time_bucket),
     scheduled,
     observed,
     observedShare: scheduled > 0 ? observed / scheduled : null,
-    cancellations: risk.cancellation_count,
-    averageDelaySeconds: observed > 0 ? risk.total_delay_seconds / observed : null,
+    cancellations: Math.round(risk.cancellation_count),
+    // Averaged over the unrounded count, which is the more accurate divisor
+    averageDelaySeconds:
+      risk.observed_departures > 0 ? risk.total_delay_seconds / risk.observed_departures : null,
     sourceLabel: humanizeSource(risk.source),
     hasHistory: !risk.neutral_prior_used,
   };

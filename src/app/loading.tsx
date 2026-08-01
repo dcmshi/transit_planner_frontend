@@ -11,7 +11,7 @@ export default function Loading() {
       <div
         role="status"
         aria-label="Loading the route planner"
-        className="h-72 w-full animate-pulse rounded-xl border border-gray-200 bg-white shadow-sm"
+        className="h-72 w-full animate-pulse rounded-xl border border-n-200 bg-n-0 shadow-sm"
       />
       <MapPlaceholder />
     </div>

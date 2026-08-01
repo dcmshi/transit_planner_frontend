@@ -1,10 +1,105 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/*
+ * Colour is defined once here as semantic tokens and flipped by
+ * prefers-color-scheme, rather than sprinkling `dark:` on ~180 utilities.
+ *
+ * Neutrals are a scale where low numbers are surfaces and high numbers are
+ * ink, in both themes — so `bg-n-0 text-n-900` is a card in either. Accents
+ * are roles rather than a scale: a flipped scale would turn the solid brand
+ * fills light and leave white text on them.
+ */
 :root {
-  --background: #ffffff;
+  --background: #f9fafb;
   --foreground: #171717;
-  --focus-ring: #15803d; /* green-700 — the brand accent */
+  --focus-ring: #15803d;
+
+  --n-0: #ffffff;
+  --n-50: #f9fafb;
+  --n-100: #f3f4f6;
+  --n-200: #e5e7eb;
+  --n-300: #d1d5db;
+  --n-400: #6b7280;
+  --n-500: #5b6270;
+  --n-600: #4b5563;
+  --n-700: #374151;
+  --n-800: #1f2937;
+  --n-900: #111827;
+
+  --brand: #15803d;
+  --brand-strong: #166534;
+  --on-brand: #ffffff;
+
+  --accent-surface: #f0fdf4;
+  --accent-surface-strong: #dcfce7;
+  --accent-edge: #bbf7d0;
+  --accent-ink: #15803d;
+  --accent-ink-strong: #14532d;
+
+  --danger-surface: #fef2f2;
+  --danger-surface-strong: #fee2e2;
+  --danger-edge: #fecaca;
+  --danger-edge-strong: #fca5a5;
+  --danger-ink: #991b1b;
+  --danger-ink-strong: #7f1d1d;
+  --danger-ink-soft: #b91c1c;
+  --danger-solid: #b91c1c;
+  --danger-solid-strong: #991b1b;
+
+  --warn-surface: #fffbeb;
+  --warn-surface-strong: #fef3c7;
+  --warn-edge: #fcd34d;
+  --warn-ink: #713f12;
+  --warn-ink-soft: #92400e;
+  --warn-ink-strong: #451a03;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #101012;
+    --foreground: #f7f7f8;
+    --focus-ring: #4ade80;
+
+    --n-0: #1c1c1f;
+    --n-50: #171719;
+    --n-100: #26262b;
+    --n-200: #33333a;
+    --n-300: #45454e;
+    --n-400: #9c9ca6;
+    --n-500: #b0b0ba;
+    --n-600: #c6c6ce;
+    --n-700: #d8d8dd;
+    --n-800: #e8e8ec;
+    --n-900: #f7f7f8;
+
+    --brand: #16a34a;
+    --brand-strong: #22c55e;
+    --on-brand: #ffffff;
+
+    --accent-surface: #0f2417;
+    --accent-surface-strong: #17351f;
+    --accent-edge: #235437;
+    --accent-ink: #6ee7a8;
+    --accent-ink-strong: #a7f3c8;
+
+    --danger-surface: #2a1416;
+    --danger-surface-strong: #3a1a1d;
+    --danger-edge: #4f2126;
+    --danger-edge-strong: #6b2b31;
+    --danger-ink: #fca5a5;
+    --danger-ink-strong: #fecaca;
+    --danger-ink-soft: #f87171;
+    --danger-solid: #b91c1c;
+    --danger-solid-strong: #dc2626;
+
+    --warn-surface: #241d0e;
+    --warn-surface-strong: #33280f;
+    --warn-edge: #5c4718;
+    --warn-ink: #fcd34d;
+    --warn-ink-soft: #fbbf24;
+    --warn-ink-strong: #fde68a;
+  }
 }
 
 @theme inline {
@@ -12,12 +107,49 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-n-0: var(--n-0);
+  --color-n-50: var(--n-50);
+  --color-n-100: var(--n-100);
+  --color-n-200: var(--n-200);
+  --color-n-300: var(--n-300);
+  --color-n-400: var(--n-400);
+  --color-n-500: var(--n-500);
+  --color-n-600: var(--n-600);
+  --color-n-700: var(--n-700);
+  --color-n-800: var(--n-800);
+  --color-n-900: var(--n-900);
+
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-on-brand: var(--on-brand);
+
+  --color-accent-surface: var(--accent-surface);
+  --color-accent-surface-strong: var(--accent-surface-strong);
+  --color-accent-edge: var(--accent-edge);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-ink-strong: var(--accent-ink-strong);
+
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-surface-strong: var(--danger-surface-strong);
+  --color-danger-edge: var(--danger-edge);
+  --color-danger-edge-strong: var(--danger-edge-strong);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-ink-strong: var(--danger-ink-strong);
+  --color-danger-ink-soft: var(--danger-ink-soft);
+  --color-danger-solid: var(--danger-solid);
+  --color-danger-solid-strong: var(--danger-solid-strong);
+
+  --color-warn-surface: var(--warn-surface);
+  --color-warn-surface-strong: var(--warn-surface-strong);
+  --color-warn-edge: var(--warn-edge);
+  --color-warn-ink: var(--warn-ink);
+  --color-warn-ink-soft: var(--warn-ink-soft);
+  --color-warn-ink-strong: var(--warn-ink-strong);
 }
 
-/* Dark mode not supported in v1 */
-
 body {
-  background: #f9fafb;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
@@ -36,4 +168,14 @@ body {
 :where(label):has(> input:focus-visible) {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Native widgets (date/time pickers, checkboxes, scrollbars) follow this */
+:root {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
 }

@@ -35,11 +35,11 @@ export default function RootLayout({
           <ErrorBoundary>
             <HealthBanner />
             <AlertsBanner />
-            <header className="bg-green-700 text-white shadow-md">
+            <header className="bg-brand text-white shadow-md">
               <div className="mx-auto max-w-5xl px-4 py-4 flex items-center gap-3">
                 <span className="text-xl font-bold tracking-tight">GO</span>
-                <span className="h-5 w-px bg-green-500" />
-                <span className="text-sm font-medium text-green-100">
+                <span className="h-5 w-px bg-white/30" />
+                <span className="text-sm font-medium text-white/80">
                   Reliability Router
                 </span>
               </div>

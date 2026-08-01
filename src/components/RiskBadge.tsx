@@ -1,12 +1,12 @@
 const styles: Record<string, string> = {
-  Low: "bg-green-100 text-green-800",
-  Medium: "bg-amber-100 text-amber-800",
-  High: "bg-red-100 text-red-800",
+  Low: "bg-accent-surface-strong text-accent-ink-strong",
+  Medium: "bg-warn-surface-strong text-warn-ink",
+  High: "bg-danger-surface-strong text-danger-ink",
 };
 
 // The generated types pin the label to three values, but the badge renders
 // whatever the live backend sends — a new severity must not come out unstyled
-const NEUTRAL = "bg-gray-100 text-gray-700";
+const NEUTRAL = "bg-n-100 text-n-700";
 
 export function RiskBadge({ label }: { label: string }) {
   const known = label in styles;

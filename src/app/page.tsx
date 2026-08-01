@@ -70,14 +70,14 @@ export default function Home() {
         {isError && (
           <div
             role="alert"
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-danger-edge bg-danger-surface px-5 py-4"
           >
-            <p className="min-w-0 text-sm text-red-800">{describeApiError(error)}</p>
+            <p className="min-w-0 text-sm text-danger-ink">{describeApiError(error)}</p>
             <button
               type="button"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 disabled:opacity-40"
+              className="shrink-0 rounded-md border border-danger-edge-strong bg-n-0 px-3 py-1.5 text-sm font-medium text-danger-ink hover:bg-danger-surface-strong disabled:opacity-40"
             >
               {isFetching ? "Retrying…" : "Try again"}
             </button>
@@ -85,11 +85,11 @@ export default function Home() {
         )}
 
         {!query && !isFetching && (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-gray-600">
+          <div className="rounded-xl border border-dashed border-n-300 bg-n-0/60 px-6 py-10 text-center">
+            <p className="text-sm font-medium text-n-600">
               Pick two GO stations to see reliability-scored routes.
             </p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-n-400">
               Every leg is scored against historical and live service data, so
               the fastest option isn&apos;t always the one we recommend.
             </p>

@@ -8,13 +8,13 @@ interface Props {
 export function ExplanationPanel({ explanation }: Props) {
   if (!isExplanationAvailable(explanation)) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-400">
+      <div className="rounded-xl border border-n-200 bg-n-50 px-4 py-3 text-sm text-n-400">
         AI explanation requires Ollama — see the{" "}
         <a
           href="https://ollama.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="underline hover:text-gray-600"
+          className="underline hover:text-n-600"
         >
           setup guide
         </a>
@@ -24,11 +24,11 @@ export function ExplanationPanel({ explanation }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 shadow-sm">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-700">
+    <div className="rounded-xl border border-accent-edge bg-accent-surface px-5 py-4 shadow-sm">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-accent-ink">
         AI explanation
       </p>
-      <div className="prose prose-sm prose-green max-w-none text-green-900 [&_strong]:text-green-800">
+      <div className="prose prose-sm prose-green max-w-none text-accent-ink-strong [&_strong]:text-accent-ink-strong">
         <ReactMarkdown>{explanation}</ReactMarkdown>
       </div>
     </div>

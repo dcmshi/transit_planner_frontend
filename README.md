@@ -11,7 +11,7 @@ Web UI for the [GO Transit Reliability Router](https://github.com/dcmshi/transit
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
 | Package manager | bun |
-| Styling | Tailwind CSS |
+| Styling | Tailwind CSS, semantic colour tokens (light/dark) |
 | Data fetching | TanStack Query v5 |
 | Type generation | openapi-typescript |
 | Map | MapLibre GL JS + OpenFreeMap tiles |
@@ -72,6 +72,7 @@ bun run test:e2e      # Playwright end-to-end suite (see prerequisites below)
 | `stop-search.spec.ts` | stubbed | A rate-limited stop lookup reports the failure and recovers on retry |
 | `arrive-by.spec.ts` | live | Arrive-by returns only itineraries beating the deadline; missed-deadline empty state |
 | `risk-basis.spec.ts` | live | The risk explainer opens from data already on the page, issuing no request |
+| `accessibility.spec.ts` | fixtures | Measured touch targets and WCAG contrast ratios, in both colour schemes |
 | `mobile-layout.spec.ts` | fixtures | 390×844 viewport: map placement between form and results, no horizontal overflow, header wrapping, map height |
 
 #### The rate limit
@@ -144,7 +145,7 @@ The frontend dev server is started automatically (an already-running
 | `src/lib/routeTimes.test.ts` | first departure to last arrival across leg kinds |
 | `src/lib/routeSummary.test.ts` | screen-reader description of a route |
 | `src/lib/apiError.test.ts` | timeout, 5xx, 4xx, unreachable and fallback messages |
-| `src/lib/riskBasis.test.ts` | bucket and source labelling, observed share, average delay, neutral prior |
+| `src/lib/riskBasis.test.ts` | bucket and source labelling, float rounding, observed share, average delay, neutral prior |
 | `src/components/RiskBasisPanel.test.tsx` | disclosure behaviour, counters shown, no request issued |
 | `src/test/repo.test.ts` | README image links, generated-types script |
 
@@ -183,6 +184,12 @@ src/
 - Returning to the tab triggers an immediate background refresh
 - Route list stays visible during background fetches (no flash of loading state)
 - "Updated at HH:MM" timestamp and a spinning refresh button in the results header
+
+**v8 — Dark mode**
+- Follows the operating system via `prefers-color-scheme`; no toggle, no flash, nothing persisted
+- Colour lives in one semantic token set in `globals.css` rather than `dark:` on every utility — neutrals are a scale where low numbers are surfaces and high numbers are ink in both themes, accents are roles
+- `color-scheme` is declared, so native date/time pickers, checkboxes and scrollbars follow too
+- Contrast is measured in both schemes in `accessibility.spec.ts`, not assumed
 
 **v7 — Arrive-by and risk transparency**
 - "Leave at / Arrive by" toggle; arrive-by returns the latest departures that still make the deadline

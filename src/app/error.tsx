@@ -20,19 +20,19 @@ export default function Error({ error, reset }: Props) {
   return (
     <div
       role="alert"
-      className="rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center"
+      className="rounded-xl border border-danger-edge bg-danger-surface px-6 py-10 text-center"
     >
-      <p className="text-sm font-semibold text-red-900">Something went wrong</p>
-      <p className="mt-1 text-sm text-red-800">
+      <p className="text-sm font-semibold text-danger-ink-strong">Something went wrong</p>
+      <p className="mt-1 text-sm text-danger-ink">
         The route planner failed to render. Trying again is usually enough.
       </p>
       {error.digest && (
-        <p className="mt-2 font-mono text-xs text-red-400">Reference: {error.digest}</p>
+        <p className="mt-2 font-mono text-xs text-danger-ink-soft">Reference: {error.digest}</p>
       )}
       <button
         type="button"
         onClick={reset}
-        className="mt-4 rounded-md bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+        className="mt-4 rounded-md bg-danger-solid px-4 py-2 text-sm font-semibold text-white hover:bg-danger-solid-strong"
       >
         Try again
       </button>

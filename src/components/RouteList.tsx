@@ -24,13 +24,13 @@ export function RouteList({ routes, explanation, isExplanationPending, emptyReas
   if (routes.length === 0) {
     const missedDeadline = emptyReason === "missed-deadline";
     return (
-      <div className="mt-8 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
-        <p className="text-sm font-medium text-gray-500">
+      <div className="mt-8 rounded-xl border border-n-200 bg-n-0 px-6 py-10 text-center shadow-sm">
+        <p className="text-sm font-medium text-n-500">
           {missedDeadline
             ? "Nothing arrives in time."
             : "No routes found between those stops."}
         </p>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-n-400">
           {missedDeadline
             ? "There is service on this route, but no departure gets you there by that time. Try a later deadline."
             : "Try a different date, time, or stop pair."}
@@ -49,7 +49,7 @@ export function RouteList({ routes, explanation, isExplanationPending, emptyReas
       {!explanation && isExplanationPending && (
         <div
           role="status"
-          className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800"
+          className="rounded-xl border border-accent-edge bg-accent-surface px-5 py-4 text-sm text-accent-ink-strong"
         >
           Writing an explanation for these routes…
         </div>
@@ -57,12 +57,12 @@ export function RouteList({ routes, explanation, isExplanationPending, emptyReas
       {/* Wraps rather than colliding: "N routes found" plus the timestamp
           overflows a ~360px viewport on one line */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+        <p className="text-xs font-medium uppercase tracking-wide text-n-400">
           {routes.length} route{routes.length !== 1 ? "s" : ""} found
         </p>
         {onRefresh && !!dataUpdatedAt && (
           <div className="flex items-center gap-2">
-            <span className="whitespace-nowrap text-xs text-gray-400">
+            <span className="whitespace-nowrap text-xs text-n-400">
               Updated at{" "}
               {new Date(dataUpdatedAt).toLocaleTimeString([], {
                 hour: "2-digit",
@@ -73,7 +73,7 @@ export function RouteList({ routes, explanation, isExplanationPending, emptyReas
               onClick={onRefresh}
               disabled={isRefreshing}
               aria-label="Refresh routes"
-              className="rounded p-1 text-gray-400 hover:text-green-700 disabled:opacity-40 transition-colors"
+              className="rounded p-1 text-n-400 hover:text-accent-ink disabled:opacity-40 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

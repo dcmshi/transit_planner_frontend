@@ -50,8 +50,8 @@ function Banner({
   children: React.ReactNode;
 }) {
   const styles = {
-    warning: "bg-amber-50 border-amber-300 text-amber-900",
-    error: "bg-red-50 border-red-300 text-red-900",
+    warning: "bg-warn-surface border-warn-edge text-warn-ink",
+    error: "bg-danger-surface border-danger-edge-strong text-danger-ink-strong",
   };
 
   const Glyph = variant === "error" ? BlockedIcon : WarningIcon;

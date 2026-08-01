@@ -96,7 +96,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
   const canSubmit = origin !== null && destination !== null && !isLoading;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-n-200 bg-n-0 p-5 shadow-sm">
       {/* noValidate: our submit handler owns validation messaging — native
           min-attribute bubbles would block backdated same-day queries */}
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
@@ -112,7 +112,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
             onClick={onSwap}
             disabled={!origin && !destination}
             aria-label="Swap origin and destination"
-            className="rounded-md border border-gray-300 bg-white p-1.5 text-gray-500 shadow-sm hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-n-300 bg-n-0 p-1.5 text-n-500 shadow-sm hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-40"
           >
             <svg
               className="h-4 w-4" aria-hidden="true"
@@ -131,15 +131,15 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
 
         {/* Radios rather than buttons: the two are one exclusive choice, and
             this gets arrow-key navigation and grouping for free */}
-        <fieldset className="flex w-fit gap-0.5 rounded-md border border-gray-300 bg-gray-50 p-0.5">
+        <fieldset className="flex w-fit gap-0.5 rounded-md border border-n-300 bg-n-50 p-0.5">
           <legend className="sr-only">When to travel</legend>
           {([["depart", "Leave at"], ["arrive", "Arrive by"]] as const).map(([value, label]) => (
             <label
               key={value}
               className={`cursor-pointer rounded px-3 py-1 text-sm font-medium transition-colors ${
                 mode === value
-                  ? "bg-white text-green-800 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-n-0 text-accent-ink-strong shadow-sm"
+                  : "text-n-500 hover:text-n-700"
               }`}
             >
               <input
@@ -157,26 +157,26 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
 
         <div className="flex gap-3">
           <div className="flex flex-1 flex-col gap-1">
-            <label htmlFor={dateId} className="text-sm font-medium text-gray-700">Date</label>
+            <label htmlFor={dateId} className="text-sm font-medium text-n-700">Date</label>
             <input
               id={dateId}
               type="date"
               value={date}
               min={todayDate()}
               onChange={(e) => { setDate(e.target.value); setFormError(null); }}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600"
+              className="rounded-md border border-n-300 bg-n-0 px-3 py-2 text-sm text-n-900 shadow-sm focus:border-brand"
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
             <div className="flex items-baseline justify-between gap-2">
-              <label htmlFor={timeId} className="text-sm font-medium text-gray-700">{timeLabel}</label>
+              <label htmlFor={timeId} className="text-sm font-medium text-n-700">{timeLabel}</label>
               {/* "Now" resets to the present, which only means something for a
                   departure — an arrival deadline of "now" is never useful */}
               {mode === "depart" && (
                 <button
                   type="button"
                   onClick={handleNow}
-                  className="text-xs font-medium text-green-700 hover:text-green-900"
+                  className="text-xs font-medium text-accent-ink hover:text-accent-ink-strong"
                 >
                   Now
                 </button>
@@ -190,22 +190,22 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
               type="time"
               value={time}
               onChange={(e) => { setTime(e.target.value); setFormError(null); }}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600"
+              className="rounded-md border border-n-300 bg-n-0 px-3 py-2 text-sm text-n-900 shadow-sm focus:border-brand"
             />
           </div>
         </div>
 
         {formError && (
-          <p role="alert" className="text-sm text-red-600">{formError}</p>
+          <p role="alert" className="text-sm text-danger-ink-soft">{formError}</p>
         )}
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+          <label className="flex items-center gap-2 text-sm text-n-600 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={explain}
               onChange={(e) => onExplainChange(e.target.checked)}
-              className="rounded border-gray-300 text-green-600"
+              className="rounded border-n-300 text-accent-ink"
             />
             Include AI explanation
           </label>
@@ -213,7 +213,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
           <button
             type="submit"
             disabled={!canSubmit}
-            className="rounded-md bg-green-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md bg-brand px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isLoading ? "Searching…" : "Find routes"}
           </button>

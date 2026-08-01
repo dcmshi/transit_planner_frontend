@@ -30,6 +30,29 @@ describe("riskBasis", () => {
     expect(basis.averageDelaySeconds).toBe(240);
   });
 
+  it("rounds the pro-rated float counters for display", () => {
+    // Real payload: the backend splits counts across buckets, so a weekend
+    // figure arrives as 17.13051275419115 — not something to put on screen
+    const basis = riskBasis(makeLiveRisk({
+      scheduled_departures: 22.84068367225487,
+      observed_departures: 17.13051275419115,
+      cancellation_count: 1.9033903060212392,
+    }));
+    expect(basis.scheduled).toBe(23);
+    expect(basis.observed).toBe(17);
+    expect(basis.cancellations).toBe(2);
+    expect(Number.isInteger(basis.scheduled)).toBe(true);
+  });
+
+  it("derives the share from the rounded pair so the display is self-consistent", () => {
+    const basis = riskBasis(makeLiveRisk({
+      scheduled_departures: 22.84068367225487,
+      observed_departures: 17.13051275419115,
+    }));
+    // 17 of 23 is what the reader sees, so the percentage must match that
+    expect(Math.round(basis.observedShare! * 100)).toBe(74);
+  });
+
   it("reports no share or average when nothing was scheduled or ran", () => {
     const basis = riskBasis(makeLiveRisk({
       scheduled_departures: 0,

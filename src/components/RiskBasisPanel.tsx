@@ -25,7 +25,7 @@ export function RiskBasisPanel({ risk }: { risk: LiveRisk }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="text-xs font-medium text-gray-500 underline decoration-dotted underline-offset-2 hover:text-gray-800"
+        className="text-xs font-medium text-n-500 underline decoration-dotted underline-offset-2 hover:text-n-800"
       >
         Why {risk.risk_label.toLowerCase()} risk?
       </button>
@@ -39,7 +39,7 @@ export function RiskBasisPanel({ risk }: { risk: LiveRisk }) {
               <Row label="Ran">
                 {basis.observed} of {basis.scheduled} scheduled
                 {basis.observedShare !== null && (
-                  <span className="text-gray-400">
+                  <span className="text-n-400">
                     {" "}
                     ({Math.round(basis.observedShare * 100)}%)
                   </span>
@@ -68,8 +68,8 @@ export function RiskBasisPanel({ risk }: { risk: LiveRisk }) {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
-      <dt className="whitespace-nowrap text-gray-400">{label}</dt>
-      <dd className="text-gray-700 tabular-nums">{children}</dd>
+      <dt className="whitespace-nowrap text-n-400">{label}</dt>
+      <dd className="text-n-700 tabular-nums">{children}</dd>
     </>
   );
 }

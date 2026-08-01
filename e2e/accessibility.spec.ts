@@ -1,4 +1,4 @@
-import { test, expect, type Locator } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import { findRoutes, gotoApp, selectStop, stubPlanningData } from "./helpers";
 
 /**
@@ -6,21 +6,27 @@ import { findRoutes, gotoApp, selectStop, stubPlanningData } from "./helpers";
  *
  * Touch-target size and colour contrast are properties of what actually
  * renders, so they are measured here rather than asserted as Tailwind classes
- * in jsdom — which would pass even if the class produced nothing.
+ * in jsdom — which would pass even if the class produced nothing. Contrast is
+ * checked in both colour schemes: the palette flips on prefers-color-scheme,
+ * and dark mode is where muted greys that read fine on white stop being
+ * legible.
  *
  * Fixture-backed: this is about rendering, not the backend.
  */
 
-test.beforeEach(async ({ page }) => {
+/** Plan a route and open the first card, so every tier of text is on screen. */
+async function showRouteDetail(page: Page) {
   await stubPlanningData(page);
   await gotoApp(page);
   await selectStop(page, "Origin", "Guelph Central", "Guelph Central GO");
   await selectStop(page, "Destination", "Union Station", "Union Station GO");
   await findRoutes(page);
-});
+  await page.getByRole("button", { name: "Show route details" }).first().click();
+}
 
 /** Contrast ratio between an element's text colour and its effective background. */
 async function contrastRatio(locator: Locator): Promise<number> {
+  await locator.waitFor({ state: "visible" });
   return locator.evaluate((el) => {
     const luminance = (css: string) => {
       const [r, g, b] = (css.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
@@ -51,24 +57,52 @@ async function contrastRatio(locator: Locator): Promise<number> {
 }
 
 test("both route card controls meet the 44px touch target minimum", async ({ page }) => {
-  const summary = page.getByRole("button", { name: /#1/ });
-  const details = page.getByRole("button", { name: "Show route details" }).first();
+  await showRouteDetail(page);
 
-  const summaryBox = (await summary.boundingBox())!;
-  const detailsBox = (await details.boundingBox())!;
+  const summaryBox = (await page.getByRole("button", { name: /#1/ }).boundingBox())!;
+  const detailsBox = (await page
+    .getByRole("button", { name: /route details/i })
+    .first()
+    .boundingBox())!;
 
   expect(summaryBox.height).toBeGreaterThanOrEqual(44);
   expect(detailsBox.height).toBeGreaterThanOrEqual(44);
   expect(detailsBox.width).toBeGreaterThanOrEqual(44);
 });
 
-test("the expand chevron clears the 3:1 contrast minimum for a control", async ({ page }) => {
-  const details = page.getByRole("button", { name: "Show route details" }).first();
-  // WCAG 1.4.11 non-text contrast
-  expect(await contrastRatio(details)).toBeGreaterThanOrEqual(3);
-});
+for (const colorScheme of ["light", "dark"] as const) {
+  test.describe(`${colorScheme} scheme`, () => {
+    test.use({ colorScheme });
 
-test("body text clears the 4.5:1 contrast minimum", async ({ page }) => {
-  const heading = page.getByText(/route(s)? found/i).first();
-  expect(await contrastRatio(heading)).toBeGreaterThanOrEqual(4.5);
-});
+    test("keeps every text tier above its contrast minimum", async ({ page }) => {
+      await showRouteDetail(page);
+
+      // 4.5:1 for text (WCAG 1.4.3); 3:1 for a control's own affordance (1.4.11)
+      const cases: Array<[string, Locator, number]> = [
+        ["route count", page.getByText(/route(s)? found/i).first(), 4.5],
+        ["form label", page.getByText("Destination").first(), 4.5],
+        ["summary times", page.getByText(/^\d{2}:\d{2} → \d{2}:\d{2}$/).first(), 4.5],
+        ["risk disclosure", page.getByRole("button", { name: /why .* risk\?/i }).first(), 4.5],
+        ["expand chevron", page.getByRole("button", { name: /route details/i }).first(), 3],
+      ];
+
+      for (const [name, locator, minimum] of cases) {
+        const ratio = await contrastRatio(locator);
+        expect(ratio, `${name} in ${colorScheme} scheme`).toBeGreaterThanOrEqual(minimum);
+      }
+    });
+
+    test("paints a surface matching the scheme", async ({ page }) => {
+      await stubPlanningData(page);
+      await gotoApp(page);
+
+      const bodyIsDark = await page.evaluate(() => {
+        const [r, g, b] = (getComputedStyle(document.body).backgroundColor.match(/\d+/g) ?? [])
+          .slice(0, 3)
+          .map(Number);
+        return (r + g + b) / 3 < 128;
+      });
+      expect(bodyIsDark).toBe(colorScheme === "dark");
+    });
+  });
+}

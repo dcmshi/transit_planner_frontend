@@ -28,7 +28,7 @@ export function AlertsBanner() {
   return (
     <div
       role="status"
-      className="w-full border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      className="w-full border-b border-warn-edge bg-warn-surface px-4 py-3 text-sm text-warn-ink"
     >
       <div className="flex items-start gap-2">
         <WarningIcon className="mt-0.5 h-4 w-4" />
@@ -56,7 +56,7 @@ export function AlertsBanner() {
             type="button"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
-            className="shrink-0 whitespace-nowrap font-medium underline hover:text-amber-950"
+            className="shrink-0 whitespace-nowrap font-medium underline hover:text-warn-ink-strong"
           >
             {expanded ? "Show fewer" : `+${hidden} more`}
           </button>

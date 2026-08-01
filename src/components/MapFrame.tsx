@@ -5,8 +5,8 @@
  * here instead, where both can reach it.
  */
 export const MAP_FRAME_CLASS =
-  "relative h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]";
+  "relative h-72 w-full overflow-hidden rounded-xl border border-n-200 shadow-sm sm:h-96 lg:h-[480px]";
 
 export function MapPlaceholder() {
-  return <div data-testid="map-placeholder" aria-hidden="true" className={`${MAP_FRAME_CLASS} bg-gray-100`} />;
+  return <div data-testid="map-placeholder" aria-hidden="true" className={`${MAP_FRAME_CLASS} bg-n-100`} />;
 }

@@ -140,10 +140,10 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
       {loadFailed && (
         <div
           role="alert"
-          className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gray-50 px-6 text-center"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-n-50 px-6 text-center"
         >
-          <p className="text-sm font-medium text-gray-700">Map unavailable</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm font-medium text-n-700">Map unavailable</p>
+          <p className="text-xs text-n-500">
             The basemap could not be loaded. Route details are still listed above.
           </p>
         </div>

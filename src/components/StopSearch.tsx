@@ -115,7 +115,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
 
   return (
     <div ref={containerRef} className="relative flex flex-col gap-1">
-      <label htmlFor={inputId} className="text-sm font-medium text-gray-700">{label}</label>
+      <label htmlFor={inputId} className="text-sm font-medium text-n-700">{label}</label>
       <div className="relative">
         <input
           id={inputId}
@@ -126,14 +126,14 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           onFocus={() => inputValue.trim().length >= 2 && setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600"
+          className="w-full rounded-md border border-n-300 bg-n-0 px-3 py-2 text-sm text-n-900 shadow-sm placeholder:text-n-400 focus:border-brand"
           aria-autocomplete="list"
           aria-expanded={showListbox}
           aria-controls={listboxId}
           aria-activedescendant={focusedIndex >= 0 ? optionId(focusedIndex) : undefined}
         />
         {isFetching && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-n-400 text-xs">
             …
           </span>
         )}
@@ -142,13 +142,13 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
       {showFailure && (
         <div
           role="status"
-          className="absolute top-full z-10 mt-1 w-full rounded-md border border-red-200 bg-white p-3 shadow-lg"
+          className="absolute top-full z-10 mt-1 w-full rounded-md border border-danger-edge bg-n-0 p-3 shadow-lg"
         >
-          <p className="text-sm text-red-800">{describeApiError(error)}</p>
+          <p className="text-sm text-danger-ink">{describeApiError(error)}</p>
           <button
             type="button"
             onClick={() => refetch()}
-            className="mt-2 text-sm font-medium text-green-700 underline hover:text-green-900"
+            className="mt-2 text-sm font-medium text-accent-ink underline hover:text-accent-ink-strong"
           >
             Try again
           </button>
@@ -159,10 +159,10 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
         <ul
           id={listboxId}
           role="listbox"
-          className="absolute top-full z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+          className="absolute top-full z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-n-200 bg-n-0 py-1 shadow-lg"
         >
           {stops.length === 0 && !isFetching && (
-            <li className="px-3 py-2 text-sm text-gray-500">No stops found</li>
+            <li className="px-3 py-2 text-sm text-n-500">No stops found</li>
           )}
           {stops.map((stop, index) => (
             <li
@@ -171,11 +171,11 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
               role="option"
               aria-selected={stop.stop_id === value?.stop_id}
               onPointerDown={() => handleSelect(stop)}
-              className={"flex cursor-pointer flex-col px-3 py-2 text-sm text-gray-900 hover:bg-green-50 aria-selected:bg-green-100" + (focusedIndex === index ? " bg-green-50" : "")}
+              className={"flex cursor-pointer flex-col px-3 py-2 text-sm text-n-900 hover:bg-accent-surface aria-selected:bg-accent-surface-strong" + (focusedIndex === index ? " bg-accent-surface" : "")}
             >
               <span className="font-medium">{stop.stop_name}</span>
               {stop.routes_served.length > 0 && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-n-500">
                   Routes: {stop.routes_served.join(", ")}
                 </span>
               )}
