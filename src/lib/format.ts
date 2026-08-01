@@ -1,5 +1,9 @@
-/** Format total seconds as "1h 23m" or "45m" */
+/**
+ * Format total seconds as "1h 23m", "45m", or "40s". Sub-minute values keep
+ * their seconds — short walk legs would otherwise all render as "0m".
+ */
 export function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h === 0) return `${m}m`;

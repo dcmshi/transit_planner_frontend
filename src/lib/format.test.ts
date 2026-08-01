@@ -14,8 +14,18 @@ describe("formatDuration", () => {
     expect(formatDuration(2 * 3600)).toBe("2h 0m");
   });
 
+  it("keeps seconds for sub-minute values instead of collapsing to 0m", () => {
+    expect(formatDuration(59)).toBe("59s");
+    expect(formatDuration(40)).toBe("40s");
+    expect(formatDuration(1)).toBe("1s");
+  });
+
+  it("switches to minutes at exactly one minute", () => {
+    expect(formatDuration(60)).toBe("1m");
+  });
+
   it("handles zero", () => {
-    expect(formatDuration(0)).toBe("0m");
+    expect(formatDuration(0)).toBe("0s");
   });
 });
 
