@@ -45,6 +45,8 @@ export function useRoutes(params: RouteParams | null) {
   // cached data, which would resurface an explanation the user turned off
   const explanation =
     params?.explain === true ? (explanationQuery.data?.explanation ?? null) : null;
+  const isExplanationPending =
+    params?.explain === true && explanationQuery.isFetching && !explanation;
 
-  return { ...routesQuery, explanation };
+  return { ...routesQuery, explanation, isExplanationPending };
 }

@@ -18,7 +18,6 @@ export interface RouteQuery {
   destination: string;
   departure_time: string;
   travel_date: string;
-  explain: boolean;
 }
 
 interface Props {
@@ -32,12 +31,15 @@ interface Props {
   onDestinationChange: (stop: StopResult | null) => void;
   /** Exchanges the two stops. Owned by the parent so both land in one update. */
   onSwap: () => void;
+  // Explanation is not a submit-time option: the parent owns the flag so
+  // toggling it takes effect against the results already on screen
+  explain: boolean;
+  onExplainChange: (explain: boolean) => void;
 }
 
-export function RouteForm({ onSubmit, isLoading = false, origin, destination, onOriginChange, onDestinationChange, onSwap }: Props) {
+export function RouteForm({ onSubmit, isLoading = false, origin, destination, onOriginChange, onDestinationChange, onSwap, explain, onExplainChange }: Props) {
   const [date, setDate] = useState(todayDate());
   const [time, setTime] = useState(nowTime());
-  const [explain, setExplain] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const id = useId();
   const dateId = `${id}-date`;
@@ -75,7 +77,6 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
       destination: destination.stop_id,
       departure_time: time,
       travel_date: date,
-      explain,
     });
   }
 
@@ -160,7 +161,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
             <input
               type="checkbox"
               checked={explain}
-              onChange={(e) => setExplain(e.target.checked)}
+              onChange={(e) => onExplainChange(e.target.checked)}
               className="rounded border-gray-300 text-green-600 focus:ring-green-600"
             />
             Include AI explanation

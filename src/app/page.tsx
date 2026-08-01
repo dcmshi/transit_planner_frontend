@@ -20,7 +20,11 @@ export default function Home() {
   // Selection is tracked by route identity (not index) so it survives
   // background refetches that reorder the results
   const [selectedRouteKey, setSelectedRouteKey] = useState<string | null>(null);
-  const { data, isFetching, isError, refetch, dataUpdatedAt, explanation } = useRoutes(query);
+  // Kept outside `query` so toggling it re-evaluates the explanation query
+  // against the results already on screen instead of waiting for a resubmit
+  const [explain, setExplain] = useState(false);
+  const { data, isFetching, isError, refetch, dataUpdatedAt, explanation, isExplanationPending } =
+    useRoutes(query && { ...query, explain });
 
   const handleSubmit = (q: RouteQuery) => {
     setQuery(q);
@@ -43,6 +47,8 @@ export default function Home() {
           onOriginChange={(origin) => setStops({ ...stops, origin })}
           onDestinationChange={(destination) => setStops({ ...stops, destination })}
           onSwap={() => setStops({ origin: stops.destination, destination: stops.origin })}
+          explain={explain}
+          onExplainChange={setExplain}
         />
 
         {isError && (
@@ -68,6 +74,7 @@ export default function Home() {
           <RouteList
             routes={data.routes}
             explanation={explanation ?? undefined}
+            isExplanationPending={isExplanationPending}
             onRefresh={refetch}
             dataUpdatedAt={dataUpdatedAt}
             isRefreshing={isFetching && !!data}

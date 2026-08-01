@@ -32,6 +32,19 @@ describe("RouteList", () => {
     expect(screen.getByText("3 routes found")).toBeInTheDocument();
   });
 
+  it("acknowledges a pending explanation so the toggle isn't a no-op", () => {
+    render(<RouteList routes={[makeRoute()]} isExplanationPending />);
+    expect(screen.getByText(/writing an explanation/i)).toBeInTheDocument();
+  });
+
+  it("drops the pending notice once the explanation arrives", () => {
+    render(
+      <RouteList routes={[makeRoute()]} explanation="Route 1 is best." isExplanationPending />
+    );
+    expect(screen.queryByText(/writing an explanation/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Route 1 is best/)).toBeInTheDocument();
+  });
+
   it("renders a numbered card for each route", () => {
     render(<RouteList routes={[makeRoute(), makeRoute(), makeRoute()]} />);
     expect(screen.getByText("#1")).toBeInTheDocument();

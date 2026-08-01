@@ -7,6 +7,8 @@ import { RouteCard } from "./RouteCard";
 interface Props {
   routes: ScoredRoute[];
   explanation?: string;
+  /** The explanation was requested and hasn't arrived yet. */
+  isExplanationPending?: boolean;
   onRefresh?: () => void;
   dataUpdatedAt?: number;
   isRefreshing?: boolean;
@@ -16,7 +18,7 @@ interface Props {
   routeKeys?: string[];
 }
 
-export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRefreshing, selectedRouteIndex, onSelectRoute, routeKeys }: Props) {
+export function RouteList({ routes, explanation, isExplanationPending, onRefresh, dataUpdatedAt, isRefreshing, selectedRouteIndex, onSelectRoute, routeKeys }: Props) {
   if (routes.length === 0) {
     return (
       <div className="mt-8 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
@@ -33,6 +35,14 @@ export function RouteList({ routes, explanation, onRefresh, dataUpdatedAt, isRef
   return (
     <div className="mt-6 flex flex-col gap-3">
       {explanation && <ExplanationPanel explanation={explanation} />}
+      {!explanation && isExplanationPending && (
+        <div
+          role="status"
+          className="rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-800"
+        >
+          Writing an explanation for these routes…
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
           {routes.length} route{routes.length !== 1 ? "s" : ""} found

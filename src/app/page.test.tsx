@@ -86,6 +86,25 @@ describe("Home page", () => {
     expect(screen.queryByText(/pick two GO stations/i)).not.toBeInTheDocument();
   });
 
+  it("applies the explain toggle to the existing results without a resubmit", async () => {
+    localStorage.setItem("go-transit-last-stops", JSON.stringify({ origin, destination }));
+    render(<Home />);
+    await screen.findByDisplayValue("Guelph Central Station");
+    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+    expect(mockUseRoutes.mock.calls.at(-1)?.[0]).toMatchObject({ explain: false });
+
+    fireEvent.click(screen.getByRole("checkbox"));
+
+    const params = mockUseRoutes.mock.calls.at(-1)?.[0];
+    expect(params).toMatchObject({ origin: "SA", destination: "SB", explain: true });
+  });
+
+  it("passes no query to useRoutes before the first submit, even with explain on", () => {
+    render(<Home />);
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(mockUseRoutes.mock.calls.at(-1)?.[0]).toBeNull();
+  });
+
   it("resets the route selection to the first route when a new query is submitted", async () => {
     localStorage.setItem("go-transit-last-stops", JSON.stringify({ origin, destination }));
     const makeRoute = () => ({

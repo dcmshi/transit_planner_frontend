@@ -29,16 +29,19 @@ const fakeStop2: StopResult = {
 function Harness({
   onSubmit = () => {},
   onStopsChange = () => {},
+  onExplainChange = () => {},
   initialOrigin = null,
   initialDestination = null,
 }: {
   onSubmit?: (q: unknown) => void;
   onStopsChange?: (origin: StopResult | null, destination: StopResult | null) => void;
+  onExplainChange?: (explain: boolean) => void;
   initialOrigin?: StopResult | null;
   initialDestination?: StopResult | null;
 }) {
   const [origin, setOrigin] = useState<StopResult | null>(initialOrigin);
   const [destination, setDestination] = useState<StopResult | null>(initialDestination);
+  const [explain, setExplain] = useState(false);
   return (
     <RouteForm
       onSubmit={onSubmit}
@@ -47,6 +50,8 @@ function Harness({
       onOriginChange={(s) => { setOrigin(s); onStopsChange(s, destination); }}
       onDestinationChange={(s) => { setDestination(s); onStopsChange(origin, s); }}
       onSwap={() => { setOrigin(destination); setDestination(origin); }}
+      explain={explain}
+      onExplainChange={(v) => { setExplain(v); onExplainChange(v); }}
     />
   );
 }
@@ -99,12 +104,12 @@ describe("RouteForm", () => {
     // Regression: persisted stops load from localStorage after hydration —
     // the form must reflect prop updates, not just mount-time values
     const { rerender } = render(
-      <RouteForm onSubmit={() => {}} origin={null} destination={null} onOriginChange={() => {}} onDestinationChange={() => {}} onSwap={() => {}} />
+      <RouteForm onSubmit={() => {}} origin={null} destination={null} onOriginChange={() => {}} onDestinationChange={() => {}} onSwap={() => {}} explain={false} onExplainChange={() => {}} />
     );
     expect(screen.getByRole("button", { name: /find routes/i })).toBeDisabled();
 
     rerender(
-      <RouteForm onSubmit={() => {}} origin={fakeStop} destination={fakeStop2} onOriginChange={() => {}} onDestinationChange={() => {}} onSwap={() => {}} />
+      <RouteForm onSubmit={() => {}} origin={fakeStop} destination={fakeStop2} onOriginChange={() => {}} onDestinationChange={() => {}} onSwap={() => {}} explain={false} onExplainChange={() => {}} />
     );
     expect(screen.getByDisplayValue("Guelph Central Station")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Toronto Union Station")).toBeInTheDocument();
@@ -124,18 +129,33 @@ describe("RouteForm", () => {
     expect(payload.destination).toBe("ST001");
     expect(payload.departure_time).toMatch(/^\d{2}:\d{2}$/);
     expect(payload.travel_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(payload.explain).toBe(false);
   });
 
-  it("checking the explain checkbox sends explain: true", () => {
+  it("reports the explain toggle immediately rather than at submit", () => {
     const onSubmit = vi.fn();
-    render(<Harness onSubmit={onSubmit} />);
+    const onExplainChange = vi.fn();
+    render(<Harness onSubmit={onSubmit} onExplainChange={onExplainChange} />);
     selectBothStops();
 
     fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
 
-    expect((onSubmit.mock.calls[0][0] as Record<string, unknown>).explain).toBe(true);
+    expect(onExplainChange).toHaveBeenCalledWith(true);
+    expect(onSubmit).not.toHaveBeenCalled();
+    // The journey payload no longer carries explain — it is not a
+    // submit-time option
+    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+    expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("explain");
+  });
+
+  it("reflects the explain flag owned by the parent", () => {
+    render(
+      <RouteForm
+        onSubmit={() => {}} origin={null} destination={null}
+        onOriginChange={() => {}} onDestinationChange={() => {}} onSwap={() => {}}
+        explain onExplainChange={() => {}}
+      />
+    );
+    expect(screen.getByRole("checkbox")).toBeChecked();
   });
 
   it("rejects a past travel date with an error instead of submitting", () => {
