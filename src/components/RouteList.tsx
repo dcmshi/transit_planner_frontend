@@ -43,13 +43,15 @@ export function RouteList({ routes, explanation, isExplanationPending, onRefresh
           Writing an explanation for these routes…
         </div>
       )}
-      <div className="flex items-center justify-between">
+      {/* Wraps rather than colliding: "N routes found" plus the timestamp
+          overflows a ~360px viewport on one line */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
           {routes.length} route{routes.length !== 1 ? "s" : ""} found
         </p>
         {onRefresh && !!dataUpdatedAt && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">
+            <span className="whitespace-nowrap text-xs text-gray-400">
               Updated at{" "}
               {new Date(dataUpdatedAt).toLocaleTimeString([], {
                 hour: "2-digit",
