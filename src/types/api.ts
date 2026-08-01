@@ -305,6 +305,18 @@ export interface components {
             is_cancelled: boolean;
             /** Time Bucket */
             time_bucket: string;
+            /** Scheduled Departures */
+            scheduled_departures: number;
+            /** Observed Departures */
+            observed_departures: number;
+            /** Total Delay Seconds */
+            total_delay_seconds: number;
+            /** Cancellation Count */
+            cancellation_count: number;
+            /** Source */
+            source: string | null;
+            /** Neutral Prior Used */
+            neutral_prior_used: boolean;
         };
         /** ReliabilityResult */
         ReliabilityResult: {
@@ -432,7 +444,7 @@ export interface components {
             /** Travel Seconds */
             travel_seconds: number;
             /** Geometry */
-            geometry?: number[][] | null;
+            geometry?: string | null;
             risk: components["schemas"]["LiveRisk"] | null;
             /** Live Delay Seconds */
             live_delay_seconds?: number | null;

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import polyline from "@mapbox/polyline";
 import type { ScoredRoute, TripLeg, WalkLeg } from "@/lib/api";
 
 export type RoutePolyline = ReturnType<typeof buildFeatureCollection>;
@@ -19,14 +20,25 @@ function endpoints(leg: Leg): Position[] | null {
 /**
  * The leg's stretch of track, when the backend has a usable shape for it.
  *
+ * `geometry` is an encoded polyline. Google's encoding is latitude-first,
+ * unlike every other coordinate this API returns, so decode via `toGeoJSON`
+ * rather than `decode` — the latter yields [lat, lon] and would put the route
+ * in the Indian Ocean.
+ *
  * Absent on walk legs — GTFS has no geometry for those — and null for trips
  * whose feed carries no shape, so coverage can be partial within one route.
  * A single point can't draw a line, so it falls back with the rest.
  */
 function trackGeometry(leg: Leg): Position[] | null {
   if (leg.kind !== "trip" || !leg.geometry) return null;
-  const points = leg.geometry.filter((p): p is Position => p.length >= 2);
-  return points.length >= 2 ? points : null;
+  let coordinates: Position[];
+  try {
+    coordinates = polyline.toGeoJSON(leg.geometry).coordinates as Position[];
+  } catch {
+    // A malformed string shouldn't take the whole map down with it
+    return null;
+  }
+  return coordinates.length >= 2 ? coordinates : null;
 }
 
 function buildFeatureCollection(route: ScoredRoute) {

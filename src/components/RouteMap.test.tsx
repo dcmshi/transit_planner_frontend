@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import type { ScoredRoute, StopResult } from "@/lib/api";
+import { makeLiveRisk } from "@/test/fixtures";
 
 /** Every Map the component constructs, newest last. */
 const maps: MockMap[] = [];
@@ -73,7 +74,7 @@ const route: ScoredRoute = {
       departure_time: "06:26:00",
       arrival_time: "07:47:00",
       travel_seconds: 4860,
-      risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
+      risk: makeLiveRisk({ risk_score: 0.1 }),
     },
   ],
   total_travel_seconds: 4860,

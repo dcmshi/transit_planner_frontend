@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useRoutePolyline } from "./useRoutePolyline";
 import type { ScoredRoute, WalkLeg, TripLeg } from "@/lib/api";
+import { encodeTrack, makeLiveRisk } from "@/test/fixtures";
 
 function makeWalkLeg(overrides: Partial<WalkLeg> = {}): WalkLeg {
   return {
@@ -37,7 +38,7 @@ function makeTripLeg(overrides: Partial<TripLeg> = {}): TripLeg {
     departure_time: "09:00:00",
     arrival_time: "09:30:00",
     travel_seconds: 1800,
-    risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
+    risk: makeLiveRisk({ risk_score: 0.1 }),
     ...overrides,
   };
 }
@@ -83,16 +84,38 @@ describe("useRoutePolyline", () => {
     expect(called).toBe(false);
   });
 
-  it("draws a trip leg along its track geometry", () => {
-    const track = [
-      [-80.247138, 43.543809],
+  it("draws a trip leg along its decoded track geometry", () => {
+    const track: [number, number][] = [
+      [-80.24714, 43.54381],
       [-80.1, 43.6],
-      [-79.822419, 43.675116],
+      [-79.82242, 43.67512],
     ];
     const { result } = renderHook(() =>
-      useRoutePolyline(makeRoute([makeTripLeg({ geometry: track })])),
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: encodeTrack(track) })])),
     );
     expect(result.current?.features[0]?.geometry.coordinates).toEqual(track);
+  });
+
+  it("decodes longitude-first, not latitude-first", () => {
+    // The encoding is lat-first while the rest of the API is [lon, lat].
+    // Reading it the wrong way round puts this route in the Indian Ocean.
+    const { result } = renderHook(() =>
+      useRoutePolyline(makeRoute([makeTripLeg({
+        geometry: encodeTrack([[-80.24714, 43.54381], [-79.82242, 43.67512]]),
+      })])),
+    );
+    const [lon, lat] = result.current!.features[0].geometry.coordinates[0];
+    expect(lon).toBeCloseTo(-80.24714, 4);
+    expect(lat).toBeCloseTo(43.54381, 4);
+  });
+
+  it("falls back rather than crashing on a malformed polyline", () => {
+    const { result } = renderHook(() =>
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: "!!!not-a-polyline!!!" })])),
+    );
+    // Either it decoded to junk we rejected, or it threw and we fell back —
+    // either way the chord is drawn and the map still renders
+    expect(result.current?.features).toHaveLength(1);
   });
 
   it("falls back to the stop-to-stop chord when a trip has no shape", () => {
@@ -108,13 +131,13 @@ describe("useRoutePolyline", () => {
   it("mixes track and chord legs within one route", () => {
     // Coverage can be partial: the backend returns null geometry for trips
     // whose feed carries no shape
-    const track = [
+    const track: [number, number][] = [
       [-79.4, 43.6],
       [-79.45, 43.65],
       [-79.5, 43.7],
     ];
     const route = makeRoute([
-      makeTripLeg({ geometry: track }),
+      makeTripLeg({ geometry: encodeTrack(track) }),
       makeTripLeg({ geometry: null }),
       makeWalkLeg(),
     ]);
@@ -133,19 +156,19 @@ describe("useRoutePolyline", () => {
   it("accepts a two-point track — short straight stretches are real", () => {
     // Mount Pleasant to Bramalea genuinely reduces to two points; that is the
     // rail being straight, not truncation
-    const track = [
-      [-79.822419, 43.675116],
-      [-79.763494, 43.68703],
+    const track: [number, number][] = [
+      [-79.82242, 43.67512],
+      [-79.76349, 43.68703],
     ];
     const { result } = renderHook(() =>
-      useRoutePolyline(makeRoute([makeTripLeg({ geometry: track })])),
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: encodeTrack(track) })])),
     );
     expect(result.current?.features[0]?.geometry.coordinates).toEqual(track);
   });
 
   it("falls back when the geometry has too few points to draw", () => {
     const { result } = renderHook(() =>
-      useRoutePolyline(makeRoute([makeTripLeg({ geometry: [[-79.4, 43.6]] })])),
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: encodeTrack([[-79.4, 43.6]]) })])),
     );
     expect(result.current?.features[0]?.geometry.coordinates).toHaveLength(2);
   });
@@ -169,7 +192,7 @@ describe("useRoutePolyline", () => {
 
   it("tags trip legs with their risk label and walk legs with null", () => {
     const route = makeRoute([
-      makeTripLeg({ risk: { risk_score: 0.9, risk_label: "High", modifiers: [], is_cancelled: false, time_bucket: "weekday_pm_peak" } }),
+      makeTripLeg({ risk: makeLiveRisk({ risk_score: 0.9, risk_label: "High", time_bucket: "weekday_pm_peak" }) }),
       makeWalkLeg(),
     ]);
     const { result } = renderHook(() => useRoutePolyline(route));

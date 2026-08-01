@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RouteCard } from "./RouteCard";
 import type { ScoredRoute, TripLeg, WalkLeg } from "@/lib/api";
+import { makeLiveRisk } from "@/test/fixtures";
 
 function makeRoute(overrides: Partial<ScoredRoute> = {}): ScoredRoute {
   return {
@@ -37,7 +38,7 @@ const tripLeg: TripLeg = {
   departure_time: "09:00:00",
   arrival_time: "09:30:00",
   travel_seconds: 1800,
-  risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
+  risk: makeLiveRisk(),
 };
 
 describe("RouteCard", () => {
