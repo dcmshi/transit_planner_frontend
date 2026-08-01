@@ -240,6 +240,37 @@ describe("RouteForm", () => {
     expect(onStopsChange).toHaveBeenCalledWith(fakeStop, null);
   });
 
+  it("the Now button resets both date and time to the present", () => {
+    // Only Date is faked — faking every timer would stall React's scheduler
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 6, 31, 14, 35));
+    try {
+      render(<Harness />);
+      fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-09-01" } });
+      fireEvent.change(screen.getByLabelText("Departure time"), { target: { value: "23:15" } });
+
+      fireEvent.click(screen.getByRole("button", { name: "Now" }));
+
+      expect(screen.getByLabelText("Date")).toHaveValue("2026-07-31");
+      expect(screen.getByLabelText("Departure time")).toHaveValue("14:35");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("the Now button clears a pending validation error", () => {
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+    selectBothStops();
+
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2020-01-01" } });
+    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Now" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("default date matches today's local date", () => {
     render(<Harness />);
     const today = new Date().toLocaleDateString("en-CA");

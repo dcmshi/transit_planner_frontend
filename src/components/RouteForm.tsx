@@ -43,6 +43,14 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
   const dateId = `${id}-date`;
   const timeId = `${id}-time`;
 
+  // Both fields reset together: "leave now" means today as well as this
+  // minute, and a stale date would otherwise survive the reset
+  function handleNow() {
+    setDate(todayDate());
+    setTime(nowTime());
+    setFormError(null);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!origin || !destination) return;
@@ -120,7 +128,16 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
-            <label htmlFor={timeId} className="text-sm font-medium text-gray-700">Departure time</label>
+            <div className="flex items-baseline justify-between gap-2">
+              <label htmlFor={timeId} className="text-sm font-medium text-gray-700">Departure time</label>
+              <button
+                type="button"
+                onClick={handleNow}
+                className="text-xs font-medium text-green-700 hover:text-green-900"
+              >
+                Now
+              </button>
+            </div>
             {/* No min: it was computed at render, so it went stale as the page
                 sat open, and backdated same-day departures are allowed on
                 purpose (see handleSubmit) — the constraint only misled. */}
