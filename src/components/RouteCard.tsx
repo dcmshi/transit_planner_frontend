@@ -7,6 +7,7 @@ import { RiskBadge } from "./RiskBadge";
 import { formatDuration, formatGtfsTime, formatDistance } from "@/lib/format";
 import { routeLabel } from "@/lib/routeName";
 import { routeTimes } from "@/lib/routeTimes";
+import { WalkIcon } from "./icons";
 
 interface Props {
   route: ScoredRoute;
@@ -184,7 +185,7 @@ function TripGroupRow({ group }: { group: TripLegGroup }) {
 function WalkLegRow({ leg }: { leg: WalkLeg }) {
   return (
     <li className="flex items-center gap-2 bg-gray-50 px-5 py-2.5 text-sm text-gray-500">
-      <span className="text-base">🚶</span>
+      <WalkIcon />
       <span>Walk {formatDistance(leg.distance_m)}</span>
       <span className="text-gray-300">·</span>
       <span className="text-xs">{leg.from_stop_name} to {leg.to_stop_name}</span>

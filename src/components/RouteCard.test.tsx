@@ -115,6 +115,16 @@ describe("RouteCard", () => {
     expect(screen.getByText("Walk 150 m")).toBeInTheDocument();
   });
 
+  it("marks the walk leg with an SVG icon rather than an emoji", () => {
+    const { container } = render(
+      <RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+    const row = screen.getByText("Walk 150 m").closest("li")!;
+    expect(row.querySelector("svg")).toBeInTheDocument();
+    expect(container.textContent).not.toContain("🚶");
+  });
+
   it("collapses leg details when the details button is clicked again", () => {
     render(<RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} />);
     fireEvent.click(screen.getByRole("button", { name: /route details/i }));

@@ -2,6 +2,7 @@
 
 import { useHealth } from "@/hooks/useHealth";
 import { API_BASE } from "@/lib/api";
+import { BlockedIcon, WarningIcon } from "./icons";
 
 export function HealthBanner() {
   const { data, isError, isPending } = useHealth();
@@ -53,17 +54,14 @@ function Banner({
     error: "bg-red-50 border-red-300 text-red-900",
   };
 
-  const icons = {
-    warning: "⚠️",
-    error: "🚫",
-  };
+  const Glyph = variant === "error" ? BlockedIcon : WarningIcon;
 
   return (
     <div
       role="alert"
       className={`w-full border-b px-4 py-3 text-sm flex items-center gap-2 ${styles[variant]}`}
     >
-      <span aria-hidden="true">{icons[variant]}</span>
+      <Glyph />
       <span>{children}</span>
     </div>
   );

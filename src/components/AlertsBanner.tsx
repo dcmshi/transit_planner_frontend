@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useAlerts } from "@/hooks/useAlerts";
+import { WarningIcon } from "./icons";
 
 // The live feed regularly carries 20+ standing alerts (elevator outages
 // etc.) — cap the strip at a few headlines so it stays a banner, not a page
@@ -30,7 +31,7 @@ export function AlertsBanner() {
       className="w-full border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
     >
       <div className="flex items-start gap-2">
-        <span aria-hidden="true">⚠️</span>
+        <WarningIcon className="mt-0.5 h-4 w-4" />
         <div className="min-w-0 flex-1">
           {headers.length === 1 ? (
             <span>{headers[0]}</span>
