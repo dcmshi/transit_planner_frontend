@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import type { StopResult } from "@/lib/api";
 
 /** Every Map the component constructs, newest last. */
@@ -72,5 +72,29 @@ describe("RouteMap", () => {
     expect(container.style.height).toBe("");
     expect(container.className).toContain("h-72");
     expect(container.className).toContain("lg:h-[480px]");
+  });
+
+  it("shows a fallback when the basemap fails before load", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<RouteMap origin={origin} destination={destination} />);
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    act(() => maps.at(-1)!.emit("error", { error: new Error("tiles unreachable") }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Map unavailable");
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it("ignores transient tile errors raised after the style has loaded", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<RouteMap origin={origin} destination={destination} />);
+    const map = maps.at(-1)!;
+
+    act(() => map.emit("load"));
+    act(() => map.emit("error", { error: new Error("one tile 404'd") }));
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    consoleError.mockRestore();
   });
 });

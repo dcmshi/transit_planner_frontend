@@ -18,6 +18,7 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const geojson = useRoutePolyline(selectedRoute ?? null, origin, destination);
 
@@ -32,7 +33,17 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
     });
     mapRef.current = map;
 
+    // Read inside the error handler, which closes over the initial state
+    let loaded = false;
+    map.on("error", (e) => {
+      console.error("maplibre error", e?.error ?? e);
+      // Errors raised before the style loads mean the basemap never
+      // arrived; later ones are individual tile misses that self-heal
+      if (!loaded) setLoadFailed(true);
+    });
+
     map.on("load", () => {
+      loaded = true;
       map.addSource("route-polyline", {
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
@@ -67,6 +78,7 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
       map.remove();
       mapRef.current = null;
       setMapLoaded(false);
+      setLoadFailed(false);
     };
   }, []);
 
@@ -116,9 +128,21 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
 
   return (
     <div
-      ref={containerRef}
       data-testid="route-map"
-      className="h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]"
-    />
+      className="relative h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]"
+    >
+      <div ref={containerRef} className="h-full w-full" />
+      {loadFailed && (
+        <div
+          role="alert"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gray-50 px-6 text-center"
+        >
+          <p className="text-sm font-medium text-gray-700">Map unavailable</p>
+          <p className="text-xs text-gray-500">
+            The basemap could not be loaded. Route details are still listed above.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
