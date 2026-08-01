@@ -127,21 +127,29 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
   }, [origin, destination]);
 
   return (
-    <div
-      data-testid="route-map"
-      className="relative h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]"
-    >
-      <div ref={containerRef} className="h-full w-full" />
-      {loadFailed && (
-        <div
-          role="alert"
-          className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gray-50 px-6 text-center"
-        >
-          <p className="text-sm font-medium text-gray-700">Map unavailable</p>
-          <p className="text-xs text-gray-500">
-            The basemap could not be loaded. Route details are still listed above.
-          </p>
-        </div>
+    <div className="flex flex-col gap-2">
+      <div
+        data-testid="route-map"
+        className="relative h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]"
+      >
+        <div ref={containerRef} className="h-full w-full" />
+        {loadFailed && (
+          <div
+            role="alert"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-gray-50 px-6 text-center"
+          >
+            <p className="text-sm font-medium text-gray-700">Map unavailable</p>
+            <p className="text-xs text-gray-500">
+              The basemap could not be loaded. Route details are still listed above.
+            </p>
+          </div>
+        )}
+      </div>
+      {selectedRoute && (
+        <p className="text-xs text-gray-400">
+          Lines connect stops directly — the backend does not publish GTFS track
+          geometry, so they show the sequence of stops, not the rail alignment.
+        </p>
       )}
     </div>
   );

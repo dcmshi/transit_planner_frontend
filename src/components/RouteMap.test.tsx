@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
-import type { StopResult } from "@/lib/api";
+import type { ScoredRoute, StopResult } from "@/lib/api";
 
 /** Every Map the component constructs, newest last. */
 const maps: MockMap[] = [];
@@ -59,6 +59,30 @@ const destination: StopResult = {
   routes_served: [],
 };
 
+const route: ScoredRoute = {
+  legs: [
+    {
+      kind: "trip",
+      from_stop_id: "S1",
+      to_stop_id: "S2",
+      from_stop_name: "Guelph Central GO",
+      to_stop_name: "Union Station GO",
+      trip_id: "T1",
+      route_id: "31",
+      service_id: "SVC1",
+      departure_time: "06:26:00",
+      arrival_time: "07:47:00",
+      travel_seconds: 4860,
+      risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false },
+    },
+  ],
+  total_travel_seconds: 4860,
+  transfers: 0,
+  total_walk_metres: 0,
+  risk_score: 0.1,
+  risk_label: "Low",
+};
+
 const { RouteMap } = await import("./RouteMap");
 
 beforeEach(() => {
@@ -84,6 +108,16 @@ describe("RouteMap", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Map unavailable");
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();
+  });
+
+  it("captions the polyline as stop-to-stop rather than true track geometry", () => {
+    render(<RouteMap origin={origin} destination={destination} selectedRoute={route} />);
+    expect(screen.getByText(/not the rail alignment/i)).toBeInTheDocument();
+  });
+
+  it("omits the polyline caption when no route is selected", () => {
+    render(<RouteMap origin={origin} destination={destination} />);
+    expect(screen.queryByText(/not the rail alignment/i)).toBeNull();
   });
 
   it("ignores transient tile errors raised after the style has loaded", () => {
