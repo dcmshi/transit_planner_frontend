@@ -8,6 +8,7 @@ import { LoadingRoutes } from "@/components/LoadingRoutes";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useSavedStops } from "@/hooks/useSavedStops";
 import { routeKeys } from "@/lib/routeKey";
+import { describeApiError } from "@/lib/apiError";
 
 const RouteMap = dynamic(
   () => import("@/components/RouteMap").then((m) => m.RouteMap),
@@ -23,7 +24,7 @@ export default function Home() {
   // Kept outside `query` so toggling it re-evaluates the explanation query
   // against the results already on screen instead of waiting for a resubmit
   const [explain, setExplain] = useState(false);
-  const { data, isFetching, isError, refetch, dataUpdatedAt, explanation, isExplanationPending } =
+  const { data, isFetching, isError, error, refetch, dataUpdatedAt, explanation, isExplanationPending } =
     useRoutes(query && { ...query, explain });
 
   const handleSubmit = (q: RouteQuery) => {
@@ -64,9 +65,20 @@ export default function Home() {
 
       <div className="flex min-w-0 flex-col gap-6 lg:col-start-1 lg:row-start-2">
         {isError && (
-          <p className="text-sm text-red-600">
-            Failed to fetch routes. Please try again.
-          </p>
+          <div
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4"
+          >
+            <p className="min-w-0 text-sm text-red-800">{describeApiError(error)}</p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 disabled:opacity-40"
+            >
+              {isFetching ? "Retrying…" : "Try again"}
+            </button>
+          </div>
         )}
 
         {!query && !isFetching && (

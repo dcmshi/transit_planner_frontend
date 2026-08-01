@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import Home from "./page";
 import { useRoutes } from "@/hooks/useRoutes";
 import { useStops } from "@/hooks/useStops";
-import type { StopResult } from "@/lib/api";
+import { ApiError, type StopResult } from "@/lib/api";
 
 vi.mock("@/components/RouteMap", () => ({
   RouteMap: () => <div data-testid="route-map" />,
@@ -103,6 +103,24 @@ describe("Home page", () => {
     render(<Home />);
     fireEvent.click(screen.getByRole("checkbox"));
     expect(mockUseRoutes.mock.calls.at(-1)?.[0]).toBeNull();
+  });
+
+  it("explains a failed search and offers a retry that refetches", () => {
+    const refetch = vi.fn();
+    mockUseRoutes.mockReturnValue({
+      data: undefined,
+      isFetching: false,
+      isError: true,
+      error: new ApiError(500, "Internal Server Error"),
+      refetch,
+      dataUpdatedAt: 0,
+      explanation: null,
+    } as unknown as ReturnType<typeof useRoutes>);
+    render(<Home />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("HTTP 500");
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetch).toHaveBeenCalledOnce();
   });
 
   it("puts the map ahead of the results in source order for the mobile stack", () => {

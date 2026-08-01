@@ -16,10 +16,22 @@ function withTimeout(signal?: AbortSignal): AbortSignal | undefined {
   return typeof AbortSignal.any === "function" ? AbortSignal.any([signal, timeout]) : signal;
 }
 
+/** Carries the HTTP status so callers can explain the failure without
+ *  re-parsing the message. */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, statusText: string) {
+    super(`API ${status}: ${statusText}`);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function apiFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { signal: withTimeout(signal) });
   if (!res.ok) {
-    throw new Error(`API ${res.status}: ${res.statusText}`);
+    throw new ApiError(res.status, res.statusText);
   }
   return res.json() as Promise<T>;
 }
@@ -64,7 +76,7 @@ export const api = {
     const res = await fetch(`${API_BASE}/routes?${qs}`, { signal: withTimeout(signal) });
     // 404 means no routes found for this origin/destination, not a real error
     if (res.status === 404) return { routes: [] };
-    if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+    if (!res.ok) throw new ApiError(res.status, res.statusText);
     return res.json() as Promise<RoutesResponse>;
   },
 };
