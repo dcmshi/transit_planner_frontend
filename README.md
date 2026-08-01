@@ -64,17 +64,34 @@ bun run test:e2e      # Playwright end-to-end suite (see prerequisites below)
 
 `bun run test:e2e` drives the real app in headless Chromium:
 
-| Spec | What it covers |
-|---|---|
-| `route-planning.spec.ts` | Stop search, route planning, selection, persistence across reloads, empty state |
-| `banners.spec.ts` | Backend-down banner and the alerts banner, with `/health` and `/alerts` stubbed at the network layer so the states are reproducible |
-| `stop-search.spec.ts` | A rate-limited stop lookup reports the failure and recovers on retry (`/stops` stubbed) |
-| `mobile-layout.spec.ts` | 390×844 viewport: map placement between form and results, no horizontal overflow, header wrapping, map height |
+| Spec | Backend | What it covers |
+|---|---|---|
+| `route-planning.spec.ts` | live | Stop search, route planning, selection, persistence across reloads, empty state |
+| `banners.spec.ts` | stubbed | Backend-down banner and the alerts banner — states the UI can't be driven into |
+| `stop-search.spec.ts` | stubbed | A rate-limited stop lookup reports the failure and recovers on retry |
+| `mobile-layout.spec.ts` | fixtures | 390×844 viewport: map placement between form and results, no horizontal overflow, header wrapping, map height |
 
-The backend rate-limits, and running the suite repeatedly will trip it. The
-helpers in `e2e/helpers.ts` take the app's own retry affordance with backoff
-when that happens, so a 429 doesn't burn a test timeout — they engage only on
-that surfaced error state, so genuine failures still fail.
+#### The rate limit
+
+The backend rate-limits: measured at roughly a 30-request bucket refilling a
+few per second. A single planning flow costs about eight requests, five of them
+`useRoutePolyline` resolving intermediate stops one name at a time — the
+missing `GET /stops/{id}` noted in that hook.
+
+The suite does **not** retry through a 429. It fails immediately, naming the
+limiter, so the condition stays visible rather than being masked:
+
+```
+Error: Stop lookup for "Union Station" failed: Too many requests to the
+backend just now. Wait a moment and try again.
+```
+
+Staying under the limit is handled by spending the budget only where it buys
+something. `route-planning.spec.ts` drives the real backend; the specs that
+test the UI itself serve their data from `e2e/fixtures.ts`, which also makes
+their assertions deterministic. `/health` and `/alerts` fire on every page load
+and are stubbed everywhere except the spec that covers them. Workers are capped
+at two so parallel tests don't burst past the bucket.
 
 Prerequisites:
 

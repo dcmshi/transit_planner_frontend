@@ -1,14 +1,14 @@
 import { test, expect } from "@playwright/test";
-import { findNoRoutes, findRoutes, gotoClean, selectStop } from "./helpers";
+import { findNoRoutes, findRoutes, gotoApp, selectStop, stubAmbientEndpoints } from "./helpers";
 
 /**
  * End-to-end flow against the real backend (FastAPI + PostGIS in Docker).
  * Requires the backend at http://localhost:8000 with GTFS data loaded.
  */
 
-// Each test starts with a clean slate — no persisted stops
 test.beforeEach(async ({ page }) => {
-  await gotoClean(page);
+  await stubAmbientEndpoints(page);
+  await gotoApp(page);
 });
 
 test("backend is reachable and healthy", async ({ request }) => {

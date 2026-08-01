@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { stubAmbientEndpoints } from "./helpers";
 
 /**
  * Stop lookup failure handling. The backend rate-limits, and a burst of
@@ -6,6 +7,10 @@ import { test, expect } from "@playwright/test";
  * tripping the limiter, at which point the dropdown claimed "No stops found"
  * and the station looked like it didn't exist.
  */
+
+test.beforeEach(async ({ page }) => {
+  await stubAmbientEndpoints(page);
+});
 
 test("a rate-limited lookup reports the failure rather than 'no stops found'", async ({ page }) => {
   await page.route("**/stops?*", (route) =>

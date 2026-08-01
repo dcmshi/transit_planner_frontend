@@ -1,9 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
-import { findRoutes, gotoClean, selectStop } from "./helpers";
+import { findRoutes, gotoApp, selectStop, stubPlanningData } from "./helpers";
 
 /**
- * Layout checks at a phone viewport, against the real backend. The desktop
- * flow is covered in route-planning.spec.ts.
+ * Layout checks at a phone viewport.
+ *
+ * Served from fixtures: what is under test is geometry, not the backend, and
+ * canned data makes the bounding-box assertions deterministic. Live-backend
+ * integration is covered by route-planning.spec.ts.
  */
 
 test.use({ viewport: { width: 390, height: 844 } });
@@ -16,7 +19,8 @@ async function planGuelphToUnion(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await gotoClean(page);
+  await stubPlanningData(page);
+  await gotoApp(page);
 });
 
 test("the map sits between the form and the results", async ({ page }) => {
