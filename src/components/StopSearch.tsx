@@ -24,6 +24,13 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
 
   const { data: stops = [], isFetching } = useStops(inputValue);
 
+  // Keep the keyboard-focused option visible — the list scrolls past
+  // max-h-60 and aria-activedescendant alone moves nothing
+  useEffect(() => {
+    if (focusedIndex < 0) return;
+    document.getElementById(`${id}-option-${focusedIndex}`)?.scrollIntoView({ block: "nearest" });
+  }, [focusedIndex, id]);
+
   // Close dropdown on outside click
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {

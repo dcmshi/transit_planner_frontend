@@ -161,6 +161,33 @@ describe("StopSearch", () => {
       expect(activeDescendant()).toMatch(/-option-1$/);
     });
 
+    it("scrolls the keyboard-focused option into view", () => {
+      // The list caps at max-h-60 and scrolls; aria-activedescendant on its
+      // own leaves the focused option off-screen
+      const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {});
+      try {
+        openDropdown();
+        fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+        fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
+
+        const scrolled = scrollIntoView.mock.instances.at(-1) as HTMLElement;
+        expect(scrolled.id).toMatch(/-option-1$/);
+        expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "nearest" });
+      } finally {
+        scrollIntoView.mockRestore();
+      }
+    });
+
+    it("scrolls nothing while no option is focused", () => {
+      const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {});
+      try {
+        openDropdown();
+        expect(scrollIntoView).not.toHaveBeenCalled();
+      } finally {
+        scrollIntoView.mockRestore();
+      }
+    });
+
     it("ArrowDown does not advance past the last option", () => {
       openDropdown();
       fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
