@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { RouteList } from "./RouteList";
-import type { ScoredRoute } from "@/lib/api";
+import type { ScoredRoute, WalkLeg } from "@/lib/api";
 
 function makeRoute(overrides: Partial<ScoredRoute> = {}): ScoredRoute {
   return {
@@ -30,6 +30,32 @@ describe("RouteList", () => {
   it("shows the correct plural route count", () => {
     render(<RouteList routes={[makeRoute(), makeRoute(), makeRoute()]} />);
     expect(screen.getByText("3 routes found")).toBeInTheDocument();
+  });
+
+  it("keeps a card's expansion with its route when a refetch reorders results", () => {
+    const walk = (from: string, to: string): WalkLeg => ({
+      kind: "walk",
+      from_stop_id: from,
+      to_stop_id: to,
+      from_stop_name: from,
+      to_stop_name: to,
+      distance_m: 100,
+      walk_seconds: 90,
+    });
+    const a = makeRoute({ legs: [walk("Stop A", "Stop B")] });
+    const b = makeRoute({ legs: [walk("Stop C", "Stop D")] });
+
+    const { rerender } = render(<RouteList routes={[a, b]} />);
+    fireEvent.click(screen.getAllByRole("button", { name: /route details/i })[1]);
+    expect(screen.getByText(/Stop C to Stop D/)).toBeInTheDocument();
+
+    rerender(<RouteList routes={[b, a]} />);
+
+    // The expanded route moved to the front and took its expansion with it
+    expect(screen.getByText(/Stop C to Stop D/)).toBeInTheDocument();
+    const details = screen.getAllByRole("button", { name: /route details/i });
+    expect(details[0]).toHaveAttribute("aria-expanded", "true");
+    expect(details[1]).toHaveAttribute("aria-expanded", "false");
   });
 
   it("acknowledges a pending explanation so the toggle isn't a no-op", () => {

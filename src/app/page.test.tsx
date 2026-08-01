@@ -105,6 +105,42 @@ describe("Home page", () => {
     expect(mockUseRoutes.mock.calls.at(-1)?.[0]).toBeNull();
   });
 
+  it("keeps the selection on the same route when a refetch reorders results", async () => {
+    localStorage.setItem("go-transit-last-stops", JSON.stringify({ origin, destination }));
+    const walkRoute = (from: string, to: string) => ({
+      legs: [{
+        kind: "walk", from_stop_id: from, to_stop_id: to,
+        from_stop_name: from, to_stop_name: to, distance_m: 100, walk_seconds: 90,
+      }],
+      total_travel_seconds: 3600, transfers: 0, total_walk_metres: 100,
+      risk_score: 0.1, risk_label: "Low",
+    });
+    const a = walkRoute("Stop A", "Stop B");
+    const b = walkRoute("Stop C", "Stop D");
+    const result = (routes: unknown[]) => ({
+      data: { routes },
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+      dataUpdatedAt: 1,
+      explanation: null,
+    } as unknown as ReturnType<typeof useRoutes>);
+
+    mockUseRoutes.mockReturnValue(result([a, b]));
+    const { rerender } = render(<Home />);
+    await screen.findByDisplayValue("Guelph Central Station");
+
+    fireEvent.click(screen.getByRole("button", { name: /#2/ }));
+    expect(screen.getByRole("button", { name: /#2/ })).toHaveAttribute("aria-pressed", "true");
+
+    mockUseRoutes.mockReturnValue(result([b, a]));
+    rerender(<Home />);
+
+    // Route b moved to position 1 and the selection followed it there
+    expect(screen.getByRole("button", { name: /#1/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /#2/ })).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("explains a failed search and offers a retry that refetches", () => {
     const refetch = vi.fn();
     mockUseRoutes.mockReturnValue({

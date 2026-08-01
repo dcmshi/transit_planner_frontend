@@ -72,6 +72,24 @@ describe("routeKeys", () => {
     expect(new Set(keys).size).toBe(3);
   });
 
+  it("assigns duplicates the same keys in the same order after a swap", () => {
+    // Two routes with identical legs are indistinguishable to routeKey, so
+    // the occurrence suffix is positional: swapping them is a no-op. That is
+    // correct precisely because the cards render identically — but it does
+    // mean per-card state stays with the position, not the object.
+    const dup = () => makeRoute([makeTripLeg("T1", "S1", "S2")]);
+    const [a, b] = [dup(), dup()];
+    expect(routeKeys([a, b])).toEqual(routeKeys([b, a]));
+  });
+
+  it("does not distinguish routes that differ only outside the legs", () => {
+    // Risk scores move on every live refetch; keying on them would defeat the
+    // stability routeKey exists for. Documented limitation, not an oversight.
+    const a = makeRoute([makeTripLeg("T1", "S1", "S2")]);
+    const b = { ...makeRoute([makeTripLeg("T1", "S1", "S2")]), risk_score: 0.9, risk_label: "High" as const };
+    expect(routeKey(a)).toBe(routeKey(b));
+  });
+
   it("keeps a route's key stable when the result set is reordered", () => {
     const r1 = makeRoute([makeTripLeg("T1", "S1", "S2")]);
     const r2 = makeRoute([makeTripLeg("T2", "S1", "S2")]);
