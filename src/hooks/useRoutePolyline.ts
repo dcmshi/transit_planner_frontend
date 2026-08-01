@@ -34,6 +34,12 @@ function buildFeatureCollection(
  *                 whatever it is currently showing (prevents a flash of empty
  *                 map between route selections)
  * - GeoJSON     — all lookups settled; draw this
+ *
+ * The API has no lookup-by-id endpoint, so each intermediate stop has to be
+ * found through the name search. Queries are keyed by search name rather than
+ * stop id so the platforms of one station — which share a name — cost a single
+ * request between them. A `GET /stops/{id}` (or a batch endpoint) on the
+ * backend would remove these searches entirely.
  */
 export function useRoutePolyline(
   route: ScoredRoute | null,
@@ -59,39 +65,46 @@ export function useRoutePolyline(
     );
   }, [route, origin?.stop_id, destination?.stop_id]);
 
-  // Fetch each intermediate stop by name, match by stop_id
+  const namesToFetch = useMemo(
+    () => [...new Set(stopsToFetch.map(({ name }) => name))],
+    [stopsToFetch],
+  );
+
   const queries = useQueries({
-    queries: stopsToFetch.map(({ id, name }) => ({
-      queryKey: ["stop-by-id", id],
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        api.stops(name, signal).then((results) => results.find((s) => s.stop_id === id) ?? null),
+    queries: namesToFetch.map((name) => ({
+      queryKey: ["stops-search", name],
+      queryFn: ({ signal }: { signal: AbortSignal }) => api.stops(name, signal),
       staleTime: Infinity,
     })),
   });
 
   const allSettled = !queries.some((q) => q.isPending);
-  // Stable fingerprint of the resolved coordinates — stands in for the
-  // queries array (new identity every render) so the memo only invalidates
-  // when a lookup actually resolves differently
-  const dataKey = queries
-    .map((q) => (q.data ? `${q.data.stop_id}:${q.data.lon},${q.data.lat}` : "?"))
+
+  // Known coordinates from the stop-search selections, plus fetched ones
+  const coords: Record<string, [number, number]> = {};
+  if (origin)      coords[origin.stop_id]      = [origin.lon, origin.lat];
+  if (destination) coords[destination.stop_id] = [destination.lon, destination.lat];
+
+  const resultsByName = new Map(
+    namesToFetch.map((name, i) => [name, queries[i]?.data ?? null] as const),
+  );
+  for (const { id, name } of stopsToFetch) {
+    const hit = resultsByName.get(name)?.find((s) => s.stop_id === id);
+    if (hit) coords[id] = [hit.lon, hit.lat];
+  }
+
+  // Stable fingerprint of the resolved coordinates — stands in for `coords`
+  // (a new object every render) so the memo only invalidates when a lookup
+  // actually resolves differently
+  const dataKey = Object.entries(coords)
+    .map(([id, [lon, lat]]) => `${id}:${lon},${lat}`)
     .join("|");
 
   return useMemo(() => {
     if (!route) return null;
     if (!allSettled) return undefined;
-
-    // Known coordinates from the stop-search selections, plus fetched ones
-    const allCoords: Record<string, [number, number]> = {};
-    if (origin)      allCoords[origin.stop_id]      = [origin.lon, origin.lat];
-    if (destination) allCoords[destination.stop_id] = [destination.lon, destination.lat];
-    stopsToFetch.forEach(({ id }, i) => {
-      const s = queries[i]?.data;
-      if (s) allCoords[id] = [s.lon, s.lat];
-    });
-
-    // Build GeoJSON — legs with missing coords are skipped gracefully
-    return buildFeatureCollection(route, allCoords);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- queries' consumed data is captured by dataKey
-  }, [route, allSettled, stopsToFetch, origin, destination, dataKey]);
+    // Legs with missing coords are skipped gracefully
+    return buildFeatureCollection(route, coords);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- coords is captured by dataKey
+  }, [route, allSettled, dataKey]);
 }

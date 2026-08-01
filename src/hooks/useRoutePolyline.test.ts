@@ -4,7 +4,7 @@ import { useQueries, type UseQueryResult } from "@tanstack/react-query";
 import { useRoutePolyline } from "./useRoutePolyline";
 import type { ScoredRoute, StopResult, WalkLeg, TripLeg } from "@/lib/api";
 
-type StopQueryResult = UseQueryResult<StopResult | null>;
+type StopQueryResult = UseQueryResult<StopResult[]>;
 function q(partial: Partial<StopQueryResult>): StopQueryResult {
   return partial as unknown as StopQueryResult;
 }
@@ -107,6 +107,37 @@ describe("useRoutePolyline", () => {
     expect(result.current?.type).toBe("FeatureCollection");
   });
 
+  it("issues one search per distinct stop name, not per stop id", () => {
+    // Platforms at one station share a name; keying the query by stop id used
+    // to fire the identical /stops search once per platform
+    const route = makeRoute([
+      makeTripLeg("S1", "Origin Stop", "P1", "Bramalea GO"),
+      makeTripLeg("P1", "Bramalea GO", "P2", "Bramalea GO"),
+      makeTripLeg("P2", "Bramalea GO", "S2", "Dest Stop"),
+    ]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: [] })]);
+    renderHook(() => useRoutePolyline(route, originStop, destStop));
+
+    const queries = (mockUseQueries.mock.calls.at(-1)?.[0] as { queries: { queryKey: unknown[] }[] }).queries;
+    expect(queries).toHaveLength(1);
+    expect(queries[0].queryKey).toEqual(["stops-search", "Bramalea GO"]);
+  });
+
+  it("resolves each platform's own coordinates from the shared search result", () => {
+    const p1: StopResult = { stop_id: "P1", stop_name: "Bramalea GO", lat: 43.70, lon: -79.72, routes_served: [] };
+    const p2: StopResult = { stop_id: "P2", stop_name: "Bramalea GO", lat: 43.71, lon: -79.73, routes_served: [] };
+    const route = makeRoute([
+      makeTripLeg("P1", "Bramalea GO", "P2", "Bramalea GO"),
+    ]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: [p1, p2] })]);
+    const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
+
+    expect(result.current?.features[0]?.geometry.coordinates).toEqual([
+      [-79.72, 43.70],
+      [-79.73, 43.71],
+    ]);
+  });
+
   it("returns a FeatureCollection when all queries settled", () => {
     const route = makeRoute([makeWalkLeg("S1", "Origin Stop", "S2", "Dest Stop")]);
     mockUseQueries.mockReturnValue([]);
@@ -130,7 +161,7 @@ describe("useRoutePolyline", () => {
       makeTripLeg("S1", "Origin Stop", "S3", "Mid Stop"),
       makeTripLeg("S3", "Mid Stop", "S2", "Dest Stop"),
     ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: midStop })]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: [midStop] })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
     expect(result.current).not.toBeNull();
     expect(result.current?.features).toHaveLength(2);
@@ -141,7 +172,7 @@ describe("useRoutePolyline", () => {
       makeWalkLeg("S1", "Origin Stop", "S_UNKNOWN", "Unknown Stop"),
       makeWalkLeg("S_UNKNOWN", "Unknown Stop", "S2", "Dest Stop"),
     ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: null })]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: [] })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
     // Both legs involve S_UNKNOWN which has no coord, so they are skipped
     expect(result.current?.features).toHaveLength(0);
@@ -167,7 +198,7 @@ describe("useRoutePolyline", () => {
       makeTripLeg("S1", "Origin Stop", "S3", "Mid Stop", "High"),
       makeWalkLeg("S3", "Mid Stop", "S2", "Dest Stop"),
     ]);
-    mockUseQueries.mockReturnValue([q({ isPending: false, data: midStop })]);
+    mockUseQueries.mockReturnValue([q({ isPending: false, data: [midStop] })]);
     const { result } = renderHook(() => useRoutePolyline(route, originStop, destStop));
     const features = result.current?.features ?? [];
     const tripFeature = features.find((f) => f.properties.kind === "trip");
