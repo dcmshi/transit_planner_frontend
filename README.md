@@ -62,9 +62,15 @@ bun run test:e2e      # Playwright end-to-end suite (see prerequisites below)
 
 ### End-to-end tests
 
-`bun run test:e2e` drives the real app in headless Chromium against the live
-backend — stop search, route planning, selection, persistence across reloads,
-and the empty state. Prerequisites:
+`bun run test:e2e` drives the real app in headless Chromium:
+
+| Spec | What it covers |
+|---|---|
+| `route-planning.spec.ts` | Stop search, route planning, selection, persistence across reloads, empty state |
+| `banners.spec.ts` | Backend-down banner and the alerts banner, with `/health` and `/alerts` stubbed at the network layer so the states are reproducible |
+| `mobile-layout.spec.ts` | 390×844 viewport: map placement between form and results, no horizontal overflow, header wrapping, map height |
+
+Prerequisites:
 
 - Backend stack running with GTFS data ingested — `docker compose up` in
   [transit_planner](https://github.com/dcmshi/transit_planner)
