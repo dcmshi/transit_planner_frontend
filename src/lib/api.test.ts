@@ -87,8 +87,44 @@ describe("api.routes", () => {
   const params = { origin: "S1", destination: "S2", departure_time: "09:00", travel_date: "2026-07-10" };
 
   it("treats 404 as an empty result set, not an error", async () => {
-    mockFetch.mockResolvedValue(jsonResponse({ detail: "not found" }, 404));
-    await expect(api.routes(params)).resolves.toEqual({ routes: [] });
+    mockFetch.mockResolvedValue(jsonResponse({ detail: "No routes found between these stops." }, 404));
+    await expect(api.routes(params)).resolves.toEqual({
+      routes: [],
+      emptyReason: "no-connection",
+    });
+  });
+
+  it("distinguishes a missed arrive-by deadline from an absent connection", async () => {
+    // Both are 404; only the detail string tells them apart, and it is matched
+    // loosely because the backend may polish the wording
+    mockFetch.mockResolvedValue(
+      jsonResponse({ detail: "No route arrives by 06:00:00 — try a later deadline." }, 404),
+    );
+    await expect(api.routes(params)).resolves.toEqual({
+      routes: [],
+      emptyReason: "missed-deadline",
+    });
+  });
+
+  it("falls back to no-connection when the 404 body is unreadable", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: "404",
+      json: () => Promise.reject(new Error("not json")),
+    } as Response);
+    await expect(api.routes(params)).resolves.toEqual({
+      routes: [],
+      emptyReason: "no-connection",
+    });
+  });
+
+  it("sends arrive_by instead of departure_time when asked", async () => {
+    mockFetch.mockResolvedValue(jsonResponse({ routes: [] }));
+    await api.routes({ origin: "GL", destination: "UN", arrive_by: "09:00", travel_date: "2026-08-03" });
+    const url = mockFetch.mock.calls[0][0] as string;
+    expect(url).toContain("arrive_by=09%3A00");
+    expect(url).not.toContain("departure_time");
   });
 
   it("throws on other error statuses", async () => {

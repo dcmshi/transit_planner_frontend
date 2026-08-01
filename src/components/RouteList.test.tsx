@@ -22,6 +22,13 @@ describe("RouteList", () => {
     expect(screen.getByText(/Try a different date/i)).toBeInTheDocument();
   });
 
+  it("distinguishes a missed deadline from an absent connection", () => {
+    render(<RouteList routes={[]} emptyReason="missed-deadline" />);
+    expect(screen.getByText(/nothing arrives in time/i)).toBeInTheDocument();
+    expect(screen.getByText(/try a later deadline/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No routes found/i)).not.toBeInTheDocument();
+  });
+
   it("shows the correct singular route count", () => {
     render(<RouteList routes={[makeRoute()]} />);
     expect(screen.getByText("1 route found")).toBeInTheDocument();

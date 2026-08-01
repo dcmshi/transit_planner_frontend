@@ -102,6 +102,7 @@ export default function Home() {
             routes={data.routes}
             explanation={explanation ?? undefined}
             isExplanationPending={isExplanationPending}
+            emptyReason={data.emptyReason}
             onRefresh={refetch}
             dataUpdatedAt={dataUpdatedAt}
             isRefreshing={isFetching && !!data}

@@ -1,4 +1,4 @@
-import type { ScoredRoute } from "@/lib/api";
+import type { EmptyReason, ScoredRoute } from "@/lib/api";
 import { parseRecommendedIndex } from "@/lib/explanation";
 import { routeKeys as computeRouteKeys } from "@/lib/routeKey";
 import { ExplanationPanel } from "./ExplanationPanel";
@@ -9,6 +9,8 @@ interface Props {
   explanation?: string;
   /** The explanation was requested and hasn't arrived yet. */
   isExplanationPending?: boolean;
+  /** Why the result set is empty, when it is. */
+  emptyReason?: EmptyReason;
   onRefresh?: () => void;
   dataUpdatedAt?: number;
   isRefreshing?: boolean;
@@ -18,12 +20,21 @@ interface Props {
   routeKeys?: string[];
 }
 
-export function RouteList({ routes, explanation, isExplanationPending, onRefresh, dataUpdatedAt, isRefreshing, selectedRouteIndex, onSelectRoute, routeKeys }: Props) {
+export function RouteList({ routes, explanation, isExplanationPending, emptyReason, onRefresh, dataUpdatedAt, isRefreshing, selectedRouteIndex, onSelectRoute, routeKeys }: Props) {
   if (routes.length === 0) {
+    const missedDeadline = emptyReason === "missed-deadline";
     return (
       <div className="mt-8 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
-        <p className="text-sm font-medium text-gray-500">No routes found between those stops.</p>
-        <p className="mt-1 text-xs text-gray-400">Try a different date, time, or stop pair.</p>
+        <p className="text-sm font-medium text-gray-500">
+          {missedDeadline
+            ? "Nothing arrives in time."
+            : "No routes found between those stops."}
+        </p>
+        <p className="mt-1 text-xs text-gray-400">
+          {missedDeadline
+            ? "There is service on this route, but no departure gets you there by that time. Try a later deadline."
+            : "Try a different date, time, or stop pair."}
+        </p>
       </div>
     );
   }

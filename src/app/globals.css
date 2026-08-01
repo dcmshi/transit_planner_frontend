@@ -29,3 +29,11 @@ body {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+
+/* Segmented controls hide the real input and style its label. The clipped
+   input can still take focus, so move the ring onto the visible label —
+   otherwise keyboard focus lands somewhere with nothing to show for it. */
+:where(label):has(> input:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

@@ -24,6 +24,12 @@ describe("globals.css", () => {
     expect(css).toMatch(/:focus-visible\s*{[^}]*outline:\s*2px solid var\(--focus-ring\)/);
     expect(css).toMatch(/--focus-ring:/);
   });
+
+  it("moves the focus ring onto the label when the input itself is hidden", () => {
+    // The segmented control clips its radios; without this the ring lands on
+    // a 1px box the user can't see
+    expect(css).toMatch(/:where\(label\):has\(> input:focus-visible\)\s*{[^}]*outline:\s*2px solid var\(--focus-ring\)/);
+  });
 });
 
 describe("focus styling", () => {

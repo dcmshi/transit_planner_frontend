@@ -131,6 +131,76 @@ describe("RouteForm", () => {
     expect(payload.travel_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
+  describe("arrive-by mode", () => {
+    it("defaults to departing, sending departure_time", () => {
+      const onSubmit = vi.fn();
+      render(<Harness onSubmit={onSubmit} />);
+      selectBothStops();
+      expect(screen.getByRole("radio", { name: "Leave at" })).toBeChecked();
+
+      fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+
+      const payload = onSubmit.mock.calls[0][0] as Record<string, unknown>;
+      expect(payload.departure_time).toMatch(/^\d{2}:\d{2}$/);
+      expect(payload).not.toHaveProperty("arrive_by");
+    });
+
+    it("sends arrive_by and no departure_time once switched", () => {
+      const onSubmit = vi.fn();
+      render(<Harness onSubmit={onSubmit} />);
+      selectBothStops();
+
+      fireEvent.click(screen.getByRole("radio", { name: "Arrive by" }));
+      fireEvent.change(screen.getByLabelText("Arrival time"), { target: { value: "09:15" } });
+      fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+
+      const payload = onSubmit.mock.calls[0][0] as Record<string, unknown>;
+      expect(payload.arrive_by).toBe("09:15");
+      expect(payload).not.toHaveProperty("departure_time");
+    });
+
+    it("relabels the time field to match the mode", () => {
+      render(<Harness />);
+      expect(screen.getByLabelText("Departure time")).toHaveAttribute("type", "time");
+
+      fireEvent.click(screen.getByRole("radio", { name: "Arrive by" }));
+
+      expect(screen.queryByLabelText("Departure time")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Arrival time")).toHaveAttribute("type", "time");
+    });
+
+    it("hides the Now reset when arriving by, where it has no meaning", () => {
+      render(<Harness />);
+      expect(screen.getByRole("button", { name: "Now" })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("radio", { name: "Arrive by" }));
+
+      expect(screen.queryByRole("button", { name: "Now" })).not.toBeInTheDocument();
+    });
+
+    it("keeps the chosen time when switching modes", () => {
+      render(<Harness />);
+      fireEvent.change(screen.getByLabelText("Departure time"), { target: { value: "17:45" } });
+
+      fireEvent.click(screen.getByRole("radio", { name: "Arrive by" }));
+
+      expect(screen.getByLabelText("Arrival time")).toHaveValue("17:45");
+    });
+
+    it("names the arrival field in its empty-time error", () => {
+      const onSubmit = vi.fn();
+      render(<Harness onSubmit={onSubmit} />);
+      selectBothStops();
+
+      fireEvent.click(screen.getByRole("radio", { name: "Arrive by" }));
+      fireEvent.change(screen.getByLabelText("Arrival time"), { target: { value: "" } });
+      fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+
+      expect(onSubmit).not.toHaveBeenCalled();
+      expect(screen.getByRole("alert")).toHaveTextContent(/choose an arrival time/i);
+    });
+  });
+
   it("reports the explain toggle immediately rather than at submit", () => {
     const onSubmit = vi.fn();
     const onExplainChange = vi.fn();

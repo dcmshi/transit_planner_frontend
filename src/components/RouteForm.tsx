@@ -13,11 +13,16 @@ function nowTime(): string {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
+/** Whether the time field means "leave after" or "arrive before". */
+export type TimeMode = "depart" | "arrive";
+
 export interface RouteQuery {
   origin: string;
   destination: string;
-  departure_time: string;
   travel_date: string;
+  // Exactly one of these is set — the backend rejects both together
+  departure_time?: string;
+  arrive_by?: string;
 }
 
 interface Props {
@@ -40,10 +45,15 @@ interface Props {
 export function RouteForm({ onSubmit, isLoading = false, origin, destination, onOriginChange, onDestinationChange, onSwap, explain, onExplainChange }: Props) {
   const [date, setDate] = useState(todayDate());
   const [time, setTime] = useState(nowTime());
+  const [mode, setMode] = useState<TimeMode>("depart");
   const [formError, setFormError] = useState<string | null>(null);
   const id = useId();
   const dateId = `${id}-date`;
   const timeId = `${id}-time`;
+  const modeName = `${id}-mode`;
+  // Distinct from the "Arrive by" radio: two controls sharing an accessible
+  // name is ambiguous to a screen reader
+  const timeLabel = mode === "depart" ? "Departure time" : "Arrival time";
 
   // Both fields reset together: "leave now" means today as well as this
   // minute, and a stale date would otherwise survive the reset
@@ -67,16 +77,19 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
       return;
     }
     if (!time) {
-      setFormError("Please choose a departure time.");
+      setFormError(
+        mode === "depart" ? "Please choose a departure time." : "Please choose an arrival time.",
+      );
       return;
     }
     // A past time on today's date is allowed on purpose — it shows the rest
-    // of today's schedule from that point.
+    // of today's schedule from that point. An arrive-by deadline in the past
+    // is left to the backend, which answers with its own missed-deadline case.
     onSubmit({
       origin: origin.stop_id,
       destination: destination.stop_id,
-      departure_time: time,
       travel_date: date,
+      ...(mode === "depart" ? { departure_time: time } : { arrive_by: time }),
     });
   }
 
@@ -116,6 +129,32 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
           onChange={onDestinationChange}
         />
 
+        {/* Radios rather than buttons: the two are one exclusive choice, and
+            this gets arrow-key navigation and grouping for free */}
+        <fieldset className="flex w-fit gap-0.5 rounded-md border border-gray-300 bg-gray-50 p-0.5">
+          <legend className="sr-only">When to travel</legend>
+          {([["depart", "Leave at"], ["arrive", "Arrive by"]] as const).map(([value, label]) => (
+            <label
+              key={value}
+              className={`cursor-pointer rounded px-3 py-1 text-sm font-medium transition-colors ${
+                mode === value
+                  ? "bg-white text-green-800 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <input
+                type="radio"
+                name={modeName}
+                value={value}
+                checked={mode === value}
+                onChange={() => { setMode(value); setFormError(null); }}
+                className="sr-only"
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+
         <div className="flex gap-3">
           <div className="flex flex-1 flex-col gap-1">
             <label htmlFor={dateId} className="text-sm font-medium text-gray-700">Date</label>
@@ -130,14 +169,18 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
           </div>
           <div className="flex flex-1 flex-col gap-1">
             <div className="flex items-baseline justify-between gap-2">
-              <label htmlFor={timeId} className="text-sm font-medium text-gray-700">Departure time</label>
-              <button
-                type="button"
-                onClick={handleNow}
-                className="text-xs font-medium text-green-700 hover:text-green-900"
-              >
-                Now
-              </button>
+              <label htmlFor={timeId} className="text-sm font-medium text-gray-700">{timeLabel}</label>
+              {/* "Now" resets to the present, which only means something for a
+                  departure — an arrival deadline of "now" is never useful */}
+              {mode === "depart" && (
+                <button
+                  type="button"
+                  onClick={handleNow}
+                  className="text-xs font-medium text-green-700 hover:text-green-900"
+                >
+                  Now
+                </button>
+              )}
             </div>
             {/* No min: it was computed at render, so it went stale as the page
                 sat open, and backdated same-day departures are allowed on

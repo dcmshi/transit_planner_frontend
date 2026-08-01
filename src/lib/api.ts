@@ -45,6 +45,15 @@ export type ScoredRoute = components["schemas"]["ScoredRoute"];
 export type TripLeg = components["schemas"]["TripLeg"];
 export type WalkLeg = components["schemas"]["WalkLeg"];
 
+/**
+ * Why a search came back empty. The backend returns 404 both when the stops
+ * have no connection at all and when service exists but nothing meets an
+ * arrive-by deadline — a distinction the empty state needs to make.
+ */
+export type EmptyReason = "no-connection" | "missed-deadline";
+
+export type RoutesResult = RoutesResponse & { emptyReason?: EmptyReason };
+
 export const api = {
   health: (signal?: AbortSignal): Promise<HealthResponse> =>
     apiFetch("/health", signal),
@@ -60,23 +69,38 @@ export const api = {
       origin: string;
       destination: string;
       departure_time?: string;
+      /** Latest acceptable arrival. The backend rejects this with
+       *  departure_time — send one or the other, never both. */
+      arrive_by?: string;
       travel_date?: string;
       explain?: boolean;
     },
     signal?: AbortSignal,
-  ): Promise<RoutesResponse> => {
+  ): Promise<RoutesResult> => {
     const qs = new URLSearchParams({
       origin: params.origin,
       destination: params.destination,
       ...(params.departure_time && { departure_time: params.departure_time }),
+      ...(params.arrive_by && { arrive_by: params.arrive_by }),
       ...(params.travel_date && { travel_date: params.travel_date }),
       // Only send explain when true — backend treats absence as false
       ...(params.explain === true && { explain: "true" }),
     });
     const res = await fetch(`${API_BASE}/routes?${qs}`, { signal: withTimeout(signal) });
-    // 404 means no routes found for this origin/destination, not a real error
-    if (res.status === 404) return { routes: [] };
+    // 404 means no routes found, not a real error — but which kind of nothing
+    // matters to the empty state. Match loosely: the backend's wording for the
+    // missed-deadline case is expected to be polished.
+    if (res.status === 404) {
+      const detail = await res
+        .json()
+        .then((body) => String((body as { detail?: unknown })?.detail ?? ""))
+        .catch(() => "");
+      return {
+        routes: [],
+        emptyReason: /arrives by/i.test(detail) ? "missed-deadline" : "no-connection",
+      };
+    }
     if (!res.ok) throw new ApiError(res.status, res.statusText);
-    return res.json() as Promise<RoutesResponse>;
+    return res.json() as Promise<RoutesResult>;
   },
 };

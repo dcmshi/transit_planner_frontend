@@ -1,3 +1,5 @@
+import polyline from "@mapbox/polyline";
+
 /**
  * Canned backend payloads for specs that exercise the UI rather than the
  * backend — layout, error handling, banner states. Keeping them off the live
@@ -55,13 +57,26 @@ function tripLeg(from: typeof GUELPH, to: typeof GUELPH, departure: string, arri
     departure_time: departure,
     arrival_time: arrival,
     travel_seconds: 2400,
-    // A bend, so the fixture exercises track geometry rather than a chord
-    geometry: [
-      [from.lon, from.lat],
-      [(from.lon + to.lon) / 2, Math.max(from.lat, to.lat) + 0.02],
-      [to.lon, to.lat],
-    ],
-    risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
+    // A bend, so the fixture exercises track geometry rather than a chord.
+    // Encoded lat-first, matching the wire format.
+    geometry: polyline.encode([
+      [from.lat, from.lon],
+      [Math.max(from.lat, to.lat) + 0.02, (from.lon + to.lon) / 2],
+      [to.lat, to.lon],
+    ]),
+    risk: {
+      risk_score: 0.2,
+      risk_label: "Low",
+      modifiers: [],
+      is_cancelled: false,
+      time_bucket: "weekday_am_peak",
+      scheduled_departures: 60,
+      observed_departures: 51,
+      total_delay_seconds: 4320,
+      cancellation_count: 2,
+      source: "seed",
+      neutral_prior_used: false,
+    },
   };
 }
 

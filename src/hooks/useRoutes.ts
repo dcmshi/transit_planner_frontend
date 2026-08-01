@@ -7,6 +7,7 @@ interface RouteParams {
   origin: string;
   destination: string;
   departure_time?: string;
+  arrive_by?: string;
   travel_date?: string;
   explain?: boolean;
 }
@@ -17,6 +18,7 @@ export function useRoutes(params: RouteParams | null) {
     origin: params.origin,
     destination: params.destination,
     departure_time: params.departure_time,
+    arrive_by: params.arrive_by,
     travel_date: params.travel_date,
   };
 
