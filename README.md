@@ -74,9 +74,10 @@ bun run test:e2e      # Playwright end-to-end suite (see prerequisites below)
 #### The rate limit
 
 The backend rate-limits: measured at roughly a 30-request bucket refilling a
-few per second. A single planning flow costs about eight requests, five of them
-`useRoutePolyline` resolving intermediate stops one name at a time — the
-missing `GET /stops/{id}` noted in that hook.
+few per second. A planning flow now costs three requests — two stop searches as
+the user types, plus `/routes`. It used to cost eight: legs carried no
+coordinates, so `useRoutePolyline` resolved each intermediate stop through its
+own `/stops` search.
 
 The suite does **not** retry through a 429. It fails immediately, naming the
 limiter, so the condition stays visible rather than being masked:
@@ -104,7 +105,7 @@ The frontend dev server is started automatically (an already-running
 
 ### Unit tests
 
-245 tests across 33 files covering utility functions, hooks, and all major components:
+251 tests across 33 files covering utility functions, hooks, and all major components:
 
 | File | What it covers |
 |---|---|
@@ -124,7 +125,7 @@ The frontend dev server is started automatically (an already-running
 | `src/components/RouteList.test.tsx` | empty state, route count, explanation panel and its pending state, header wrapping, expansion across a reorder |
 | `src/components/RouteCard.test.tsx` | summary row and depart/arrive times, select vs. expand decoupling, selection styling, route-id demotion, touch targets |
 | `src/components/ErrorBoundary.test.tsx` | fallback rendering and error logging |
-| `src/hooks/useRoutePolyline.test.ts` | GeoJSON output, coord resolution, per-name query dedupe, missing-coord skip, pending sentinel, leg properties |
+| `src/hooks/useRoutePolyline.test.ts` | GeoJSON output from leg coordinates, track geometry vs. chord fallback, mixed coverage, missing-coord skip, leg properties |
 | `src/hooks/useSavedStops.test.tsx` | load after hydration, StrictMode clobber regression, persistence, corrupt JSON |
 | `src/hooks/useStops.test.tsx` | 300 ms debounce, minimum query length |
 | `src/hooks/useHealth.test.ts` | poll interval per health state |
@@ -133,7 +134,7 @@ The frontend dev server is started automatically (an already-running
 | `src/app/providers.test.tsx` | devtools excluded outside development |
 | `src/app/globals.test.ts` | font variables applied, one shared focus treatment |
 | `src/app/routeFallbacks.test.tsx` | route-level loading, error and not-found pages |
-| `src/components/RouteMap.test.tsx` | responsive sizing, basemap failure fallback, screen-reader summary, polyline caption |
+| `src/components/RouteMap.test.tsx` | responsive sizing, basemap failure fallback, screen-reader summary |
 | `src/components/MapFrame.test.tsx` | placeholder matches the loaded map's frame |
 | `src/components/icons.test.tsx` | icons are decorative and inherit colour |
 | `src/lib/routeName.test.ts` | line designation vs. opaque route id |

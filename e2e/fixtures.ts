@@ -45,12 +45,22 @@ function tripLeg(from: typeof GUELPH, to: typeof GUELPH, departure: string, arri
     to_stop_id: to.stop_id,
     from_stop_name: from.stop_name,
     to_stop_name: to.stop_name,
+    from_lat: from.lat,
+    from_lon: from.lon,
+    to_lat: to.lat,
+    to_lon: to.lon,
     trip_id: `${from.stop_id}-${to.stop_id}`,
     route_id: "06260926-GT",
     service_id: "20260801",
     departure_time: departure,
     arrival_time: arrival,
     travel_seconds: 2400,
+    // A bend, so the fixture exercises track geometry rather than a chord
+    geometry: [
+      [from.lon, from.lat],
+      [(from.lon + to.lon) / 2, Math.max(from.lat, to.lat) + 0.02],
+      [to.lon, to.lat],
+    ],
     risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false },
   };
 }

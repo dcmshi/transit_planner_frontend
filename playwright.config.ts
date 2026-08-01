@@ -11,10 +11,9 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   retries: 0,
   // The backend rate-limits: measured at roughly a 30-request bucket refilling
-  // a few per second. A planning test costs ~8 requests, most of them the
-  // polyline resolving intermediate stops, so three workers bursting together
-  // sat right on the limit. Two keeps the suite inside it without meaningfully
-  // slowing it — wall time is dominated by route scoring, not by concurrency.
+  // a few per second. Two workers keeps the suite comfortably inside it without
+  // meaningfully slowing it — wall time is dominated by route scoring, not by
+  // concurrency.
   workers: 2,
   use: {
     baseURL: "http://localhost:3000",

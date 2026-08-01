@@ -83,6 +83,73 @@ describe("useRoutePolyline", () => {
     expect(called).toBe(false);
   });
 
+  it("draws a trip leg along its track geometry", () => {
+    const track = [
+      [-80.247138, 43.543809],
+      [-80.1, 43.6],
+      [-79.822419, 43.675116],
+    ];
+    const { result } = renderHook(() =>
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: track })])),
+    );
+    expect(result.current?.features[0]?.geometry.coordinates).toEqual(track);
+  });
+
+  it("falls back to the stop-to-stop chord when a trip has no shape", () => {
+    const { result } = renderHook(() =>
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: null })])),
+    );
+    expect(result.current?.features[0]?.geometry.coordinates).toEqual([
+      [-79.4, 43.6],
+      [-79.5, 43.7],
+    ]);
+  });
+
+  it("mixes track and chord legs within one route", () => {
+    // Coverage can be partial: the backend returns null geometry for trips
+    // whose feed carries no shape
+    const track = [
+      [-79.4, 43.6],
+      [-79.45, 43.65],
+      [-79.5, 43.7],
+    ];
+    const route = makeRoute([
+      makeTripLeg({ geometry: track }),
+      makeTripLeg({ geometry: null }),
+      makeWalkLeg(),
+    ]);
+    const { result } = renderHook(() => useRoutePolyline(route));
+    const coords = result.current?.features.map((f) => f.geometry.coordinates.length);
+    expect(coords).toEqual([3, 2, 2]);
+  });
+
+  it("keeps walk legs as a straight chord even though they carry no geometry", () => {
+    const walk = makeWalkLeg();
+    expect(walk).not.toHaveProperty("geometry");
+    const { result } = renderHook(() => useRoutePolyline(makeRoute([walk])));
+    expect(result.current?.features[0]?.geometry.coordinates).toHaveLength(2);
+  });
+
+  it("accepts a two-point track — short straight stretches are real", () => {
+    // Mount Pleasant to Bramalea genuinely reduces to two points; that is the
+    // rail being straight, not truncation
+    const track = [
+      [-79.822419, 43.675116],
+      [-79.763494, 43.68703],
+    ];
+    const { result } = renderHook(() =>
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: track })])),
+    );
+    expect(result.current?.features[0]?.geometry.coordinates).toEqual(track);
+  });
+
+  it("falls back when the geometry has too few points to draw", () => {
+    const { result } = renderHook(() =>
+      useRoutePolyline(makeRoute([makeTripLeg({ geometry: [[-79.4, 43.6]] })])),
+    );
+    expect(result.current?.features[0]?.geometry.coordinates).toHaveLength(2);
+  });
+
   it("skips a leg whose coordinates are missing", () => {
     const route = makeRoute([
       makeWalkLeg({ to_lat: null, to_lon: null }),

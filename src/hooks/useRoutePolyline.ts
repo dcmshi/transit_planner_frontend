@@ -16,9 +16,23 @@ function endpoints(leg: Leg): Position[] | null {
   ];
 }
 
+/**
+ * The leg's stretch of track, when the backend has a usable shape for it.
+ *
+ * Absent on walk legs — GTFS has no geometry for those — and null for trips
+ * whose feed carries no shape, so coverage can be partial within one route.
+ * A single point can't draw a line, so it falls back with the rest.
+ */
+function trackGeometry(leg: Leg): Position[] | null {
+  if (leg.kind !== "trip" || !leg.geometry) return null;
+  const points = leg.geometry.filter((p): p is Position => p.length >= 2);
+  return points.length >= 2 ? points : null;
+}
+
 function buildFeatureCollection(route: ScoredRoute) {
   const features = route.legs.flatMap((leg) => {
-    const coordinates = endpoints(leg);
+    // Track where we have it, straight stop-to-stop chord where we don't
+    const coordinates = trackGeometry(leg) ?? endpoints(leg);
     if (!coordinates) return [];
     return [{
       type: "Feature" as const,
@@ -35,10 +49,12 @@ function buildFeatureCollection(route: ScoredRoute) {
 /**
  * Map GeoJSON for a route's legs, or null when nothing is selected.
  *
- * Every leg carries its own stop coordinates, so this is a pure derivation
- * with no fetching. It used to resolve each intermediate stop through
- * `GET /stops?query=<name>` and filter by id — five extra requests on a
- * Guelph-to-Union route, against a backend that rate-limits.
+ * Trip legs are drawn along their actual track; walk legs, and trips whose
+ * feed has no shape, fall back to a straight line between the two stops.
+ * Every leg carries its own coordinates and geometry, so this is a pure
+ * derivation with no fetching — it used to resolve each intermediate stop
+ * through `GET /stops?query=<name>`, five extra requests on a
+ * Guelph-to-Union route against a backend that rate-limits.
  */
 export function useRoutePolyline(route: ScoredRoute | null): RoutePolyline | null {
   return useMemo(() => (route ? buildFeatureCollection(route) : null), [route]);

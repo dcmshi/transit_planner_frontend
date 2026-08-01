@@ -125,16 +125,6 @@ describe("RouteMap", () => {
     );
   });
 
-  it("captions the polyline as stop-to-stop rather than true track geometry", () => {
-    render(<RouteMap origin={origin} destination={destination} selectedRoute={route} />);
-    expect(screen.getByText(/not the rail alignment/i)).toBeInTheDocument();
-  });
-
-  it("omits the polyline caption when no route is selected", () => {
-    render(<RouteMap origin={origin} destination={destination} />);
-    expect(screen.queryByText(/not the rail alignment/i)).toBeNull();
-  });
-
   it("ignores transient tile errors raised after the style has loaded", () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<RouteMap origin={origin} destination={destination} />);
