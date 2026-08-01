@@ -118,7 +118,10 @@ describe("useRoutePolyline", () => {
     mockUseQueries.mockReturnValue([q({ isPending: false, data: [] })]);
     renderHook(() => useRoutePolyline(route, originStop, destStop));
 
-    const queries = (mockUseQueries.mock.calls.at(-1)?.[0] as { queries: { queryKey: unknown[] }[] }).queries;
+    const lastCall = mockUseQueries.mock.calls.at(-1)?.[0] as unknown as
+      | { queries: { queryKey: unknown[] }[] }
+      | undefined;
+    const queries = lastCall?.queries ?? [];
     expect(queries).toHaveLength(1);
     expect(queries[0].queryKey).toEqual(["stops-search", "Bramalea GO"]);
   });
