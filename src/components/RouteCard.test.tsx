@@ -74,6 +74,24 @@ describe("RouteCard", () => {
     expect(screen.queryByText("Recommended")).not.toBeInTheDocument();
   });
 
+  it("marks selection with a neutral dark ring, not a second accent colour", () => {
+    render(<RouteCard route={makeRoute()} index={1} isSelected />);
+    const card = screen.getByTestId("route-card");
+    expect(card.className).toContain("ring-gray-900");
+    expect(card.className).not.toContain("blue");
+  });
+
+  it("uses the green accent for the recommended card", () => {
+    render(<RouteCard route={makeRoute()} index={1} recommended />);
+    expect(screen.getByTestId("route-card").className).toContain("border-green-500");
+  });
+
+  it("keeps the Recommended label when the recommended card is also selected", () => {
+    render(<RouteCard route={makeRoute()} index={1} recommended isSelected />);
+    expect(screen.getByText("Recommended")).toBeInTheDocument();
+    expect(screen.getByTestId("route-card").className).toContain("ring-gray-900");
+  });
+
   it("expands to show leg details when the details button is clicked", () => {
     render(<RouteCard route={makeRoute({ legs: [walkLeg], total_walk_metres: 150 })} index={1} />);
     expect(screen.queryByText(/Stop A to Stop B/i)).not.toBeInTheDocument();

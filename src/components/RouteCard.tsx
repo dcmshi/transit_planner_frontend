@@ -18,14 +18,19 @@ export function RouteCard({ route, index, recommended = false, isSelected, onSel
   const [expanded, setExpanded] = useState(false);
   const groups = groupLegs(route.legs);
 
-  const borderClass = recommended
-    ? "border-green-400 ring-1 ring-green-400"
-    : isSelected
-    ? "border-blue-400 ring-1 ring-blue-400"
+  // Green is the brand accent and belongs to "Recommended"; selection uses a
+  // neutral dark ring so a card can be both without two accents competing
+  const borderClass = isSelected
+    ? "border-gray-900 ring-1 ring-gray-900"
+    : recommended
+    ? "border-green-500"
     : "border-gray-200";
 
   return (
-    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden ${borderClass}`}>
+    <div
+      data-testid="route-card"
+      className={`rounded-xl border bg-white shadow-sm overflow-hidden ${borderClass}`}
+    >
       {recommended && (
         <div className="bg-green-600 px-5 py-1 text-xs font-semibold text-white">
           Recommended
