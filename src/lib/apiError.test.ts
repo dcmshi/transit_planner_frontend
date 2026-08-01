@@ -12,6 +12,12 @@ describe("describeApiError", () => {
     expect(describeApiError(new DOMException("aborted", "AbortError"))).toMatch(/cancelled/i);
   });
 
+  it("calls out rate limiting as temporary rather than a bad search", () => {
+    const message = describeApiError(new ApiError(429, "Too Many Requests"));
+    expect(message).toMatch(/too many requests/i);
+    expect(message).toMatch(/wait a moment/i);
+  });
+
   it("distinguishes a backend failure from a rejected search", () => {
     expect(describeApiError(new ApiError(500, "Internal Server Error"))).toContain("HTTP 500");
     expect(describeApiError(new ApiError(500, "Internal Server Error"))).toMatch(/backend failed/i);

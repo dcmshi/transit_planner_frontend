@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { StopSearch } from "./StopSearch";
 import { useStops } from "@/hooks/useStops";
-import type { StopResult } from "@/lib/api";
+import { ApiError, type StopResult } from "@/lib/api";
 
 vi.mock("@/hooks/useStops");
 
@@ -109,6 +109,47 @@ describe("StopSearch", () => {
 
     rerender(<StopSearch label="Origin" value={null} onChange={() => {}} />);
     expect(screen.getByRole("combobox")).toHaveValue("Guelph Cent");
+  });
+
+  describe("failed lookup", () => {
+    function renderFailed(error: unknown = new ApiError(429, "Too Many Requests")) {
+      const refetch = vi.fn();
+      mockUseStops.mockReturnValue({
+        data: undefined,
+        isFetching: false,
+        isError: true,
+        error,
+        refetch,
+      } as unknown as ReturnType<typeof useStops>);
+      render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gu" } });
+      return refetch;
+    }
+
+    it("reports the failure instead of claiming there are no stops", () => {
+      // Regression: a 429 from the backend rendered "No stops found", which
+      // reads as "that station doesn't exist"
+      renderFailed();
+      expect(screen.queryByText("No stops found")).not.toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(/too many requests/i);
+    });
+
+    it("offers a retry, since the query does not recover on its own", () => {
+      const refetch = renderFailed();
+      fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+      expect(refetch).toHaveBeenCalledOnce();
+    });
+
+    it("does not advertise a listbox that isn't rendered", () => {
+      renderFailed();
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      expect(screen.getByRole("combobox")).toHaveAttribute("aria-expanded", "false");
+    });
+
+    it("describes a dropped connection differently from a rate limit", () => {
+      renderFailed(new TypeError("Failed to fetch"));
+      expect(screen.getByRole("status")).toHaveTextContent(/couldn't reach the backend/i);
+    });
   });
 
   it("associates the label with the input", () => {

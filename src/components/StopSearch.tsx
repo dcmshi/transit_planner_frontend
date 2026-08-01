@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useId } from "react";
 import { useStops } from "@/hooks/useStops";
 import type { StopResult } from "@/lib/api";
+import { describeApiError } from "@/lib/apiError";
 
 interface Props {
   label: string;
@@ -22,7 +23,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
   const listboxId = `${id}-listbox`;
   const optionId = (index: number) => `${id}-option-${index}`;
 
-  const { data: stops = [], isFetching } = useStops(inputValue);
+  const { data: stops = [], isFetching, isError, error, refetch } = useStops(inputValue);
 
   // Keep the keyboard-focused option visible — the list scrolls past
   // max-h-60 and aria-activedescendant alone moves nothing
@@ -106,6 +107,11 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
   }
 
   const showDropdown = open && inputValue.trim().length >= 2;
+  // A failed lookup is not an empty one: rendering "No stops found" for a 429
+  // or a dropped connection tells the user the stop doesn't exist. Show the
+  // failure instead, and offer a way out — React Query won't retry on its own.
+  const showFailure = showDropdown && isError && !isFetching;
+  const showListbox = showDropdown && !showFailure;
 
   return (
     <div ref={containerRef} className="relative flex flex-col gap-1">
@@ -122,7 +128,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           placeholder={placeholder}
           className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600"
           aria-autocomplete="list"
-          aria-expanded={showDropdown}
+          aria-expanded={showListbox}
           aria-controls={listboxId}
           aria-activedescendant={focusedIndex >= 0 ? optionId(focusedIndex) : undefined}
         />
@@ -133,7 +139,23 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
         )}
       </div>
 
-      {showDropdown && (
+      {showFailure && (
+        <div
+          role="status"
+          className="absolute top-full z-10 mt-1 w-full rounded-md border border-red-200 bg-white p-3 shadow-lg"
+        >
+          <p className="text-sm text-red-800">{describeApiError(error)}</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-2 text-sm font-medium text-green-700 underline hover:text-green-900"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {showListbox && (
         <ul
           id={listboxId}
           role="listbox"

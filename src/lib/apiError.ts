@@ -12,6 +12,9 @@ export function describeApiError(error: unknown): string {
     return `The search took longer than ${TIMEOUT_SECONDS} seconds and was cancelled. A cold backend cache is usually the cause — trying again is often faster.`;
   }
   if (error instanceof ApiError) {
+    if (error.status === 429) {
+      return "Too many requests to the backend just now. Wait a moment and try again.";
+    }
     if (error.status >= 500) {
       return `The backend failed while scoring these routes (HTTP ${error.status}).`;
     }
