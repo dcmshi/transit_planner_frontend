@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { AlertsBanner } from "./AlertsBanner";
 import { useAlerts } from "@/hooks/useAlerts";
 import type { AlertResult } from "@/lib/api";
@@ -75,5 +75,56 @@ describe("AlertsBanner", () => {
     expect(status).toHaveTextContent("Alert three");
     expect(status).not.toHaveTextContent("Alert four");
     expect(status).toHaveTextContent("+2 more");
+  });
+
+  it("expands to the full list and collapses again", () => {
+    mockUseAlerts.mockReturnValue(
+      withData([
+        alert("a1", "Alert one"),
+        alert("a2", "Alert two"),
+        alert("a3", "Alert three"),
+        alert("a4", "Alert four"),
+      ]),
+    );
+    render(<AlertsBanner />);
+    const toggle = screen.getByRole("button", { name: "+1 more" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Alert four");
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+
+    fireEvent.click(screen.getByRole("button", { name: "Show fewer" }));
+    expect(screen.getByRole("status")).not.toHaveTextContent("Alert four");
+  });
+
+  it("lists each distinct headline once", () => {
+    // The live feed repeats "Elevator out of service" per station
+    mockUseAlerts.mockReturnValue(
+      withData([
+        alert("a1", "Elevator out of service"),
+        alert("a2", "Elevator out of service"),
+        alert("a3", "Route 27 detour"),
+      ]),
+    );
+    render(<AlertsBanner />);
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("2 active service alerts");
+    expect(status.textContent?.match(/Elevator out of service/g)).toHaveLength(1);
+  });
+
+  it("renders nothing when every alert has an empty header", () => {
+    mockUseAlerts.mockReturnValue(withData([alert("a1", ""), alert("a2", "")]));
+    const { container } = render(<AlertsBanner />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("shows no toggle when every headline already fits", () => {
+    mockUseAlerts.mockReturnValue(
+      withData([alert("a1", "Alert one"), alert("a2", "Alert two")]),
+    );
+    render(<AlertsBanner />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

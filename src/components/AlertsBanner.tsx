@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAlerts } from "@/hooks/useAlerts";
 
 // The live feed regularly carries 20+ standing alerts (elevator outages
@@ -12,23 +13,54 @@ const MAX_HEADERS = 3;
  */
 export function AlertsBanner() {
   const { data: alerts } = useAlerts();
+  const [expanded, setExpanded] = useState(false);
   if (!alerts || alerts.length === 0) return null;
 
-  const headers = alerts.map((a) => a.header).filter(Boolean);
-  const shown = headers.slice(0, MAX_HEADERS);
-  const more = headers.length - shown.length;
+  // The feed repeats identical headlines across stations ("Elevator out of
+  // service" at each of them), so each distinct one is listed once and the
+  // count reports what the reader can actually see
+  const headers = [...new Set(alerts.map((a) => a.header).filter(Boolean))];
+  if (headers.length === 0) return null;
+
+  const hidden = headers.length - MAX_HEADERS;
 
   return (
     <div
       role="status"
-      className="w-full border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start gap-2"
+      className="w-full border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
     >
-      <span aria-hidden="true">⚠️</span>
-      <span>
-        {alerts.length === 1
-          ? shown[0] ?? "1 active service alert"
-          : `${alerts.length} active service alerts: ${shown.join(" · ")}${more > 0 ? ` · +${more} more` : ""}`}
-      </span>
+      <div className="flex items-start gap-2">
+        <span aria-hidden="true">⚠️</span>
+        <div className="min-w-0 flex-1">
+          {headers.length === 1 ? (
+            <span>{headers[0]}</span>
+          ) : expanded ? (
+            <>
+              <span className="font-medium">{headers.length} active service alerts</span>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                {headers.map((header) => (
+                  <li key={header}>{header}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <span>
+              {headers.length} active service alerts:{" "}
+              {headers.slice(0, MAX_HEADERS).join(" · ")}
+            </span>
+          )}
+        </div>
+        {hidden > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="shrink-0 whitespace-nowrap font-medium underline hover:text-amber-950"
+          >
+            {expanded ? "Show fewer" : `+${hidden} more`}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
