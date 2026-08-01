@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { findRoutes, gotoClean, selectStop } from "./helpers";
 
 /**
  * Layout checks at a phone viewport, against the real backend. The desktop
@@ -7,26 +8,19 @@ import { test, expect, type Page } from "@playwright/test";
 
 test.use({ viewport: { width: 390, height: 844 } });
 
-async function selectStop(page: Page, label: string, query: string, stopName: string) {
-  const input = page.getByRole("combobox", { name: label });
-  await input.fill(query);
-  await page.getByRole("option", { name: stopName }).first().click();
-  await expect(input).toHaveValue(stopName);
-}
-
-test.beforeEach(async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
-});
-
-test("the map sits between the form and the results", async ({ page }) => {
+async function planGuelphToUnion(page: Page) {
   await selectStop(page, "Origin", "Guelph Central", "Guelph Central GO");
   await selectStop(page, "Destination", "Union Station", "Union Station GO");
   await page.getByLabel("Departure time").fill("06:00");
-  await page.getByRole("button", { name: "Find routes" }).click();
+  await findRoutes(page);
+}
 
-  await expect(page.getByText(/route(s)? found/i)).toBeVisible({ timeout: 60_000 });
+test.beforeEach(async ({ page }) => {
+  await gotoClean(page);
+});
+
+test("the map sits between the form and the results", async ({ page }) => {
+  await planGuelphToUnion(page);
 
   const form = await page.getByRole("button", { name: "Find routes" }).boundingBox();
   const map = await page.getByRole("region", { name: "Route map" }).boundingBox();
@@ -37,11 +31,7 @@ test("the map sits between the form and the results", async ({ page }) => {
 });
 
 test("nothing overflows the viewport horizontally", async ({ page }) => {
-  await selectStop(page, "Origin", "Guelph Central", "Guelph Central GO");
-  await selectStop(page, "Destination", "Union Station", "Union Station GO");
-  await page.getByLabel("Departure time").fill("06:00");
-  await page.getByRole("button", { name: "Find routes" }).click();
-  await expect(page.getByText(/route(s)? found/i)).toBeVisible({ timeout: 60_000 });
+  await planGuelphToUnion(page);
 
   const overflows = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -50,11 +40,7 @@ test("nothing overflows the viewport horizontally", async ({ page }) => {
 });
 
 test("the results header wraps rather than clipping the refresh control", async ({ page }) => {
-  await selectStop(page, "Origin", "Guelph Central", "Guelph Central GO");
-  await selectStop(page, "Destination", "Union Station", "Union Station GO");
-  await page.getByLabel("Departure time").fill("06:00");
-  await page.getByRole("button", { name: "Find routes" }).click();
-  await expect(page.getByText(/route(s)? found/i)).toBeVisible({ timeout: 60_000 });
+  await planGuelphToUnion(page);
 
   const refresh = await page.getByRole("button", { name: "Refresh routes" }).boundingBox();
   expect(refresh!.x + refresh!.width).toBeLessThanOrEqual(390);

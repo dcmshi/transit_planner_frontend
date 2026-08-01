@@ -68,7 +68,13 @@ bun run test:e2e      # Playwright end-to-end suite (see prerequisites below)
 |---|---|
 | `route-planning.spec.ts` | Stop search, route planning, selection, persistence across reloads, empty state |
 | `banners.spec.ts` | Backend-down banner and the alerts banner, with `/health` and `/alerts` stubbed at the network layer so the states are reproducible |
+| `stop-search.spec.ts` | A rate-limited stop lookup reports the failure and recovers on retry (`/stops` stubbed) |
 | `mobile-layout.spec.ts` | 390×844 viewport: map placement between form and results, no horizontal overflow, header wrapping, map height |
+
+The backend rate-limits, and running the suite repeatedly will trip it. The
+helpers in `e2e/helpers.ts` take the app's own retry affordance with backoff
+when that happens, so a 429 doesn't burn a test timeout — they engage only on
+that surfaced error state, so genuine failures still fail.
 
 Prerequisites:
 

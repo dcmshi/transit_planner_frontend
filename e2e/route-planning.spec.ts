@@ -1,23 +1,14 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { findNoRoutes, findRoutes, gotoClean, selectStop } from "./helpers";
 
 /**
  * End-to-end flow against the real backend (FastAPI + PostGIS in Docker).
  * Requires the backend at http://localhost:8000 with GTFS data loaded.
  */
 
-async function selectStop(page: Page, label: string, query: string, stopName: string) {
-  const input = page.getByRole("combobox", { name: label });
-  await input.fill(query);
-  // Option accessible names include the "Routes: …" line, so match by substring
-  await page.getByRole("option", { name: stopName }).first().click();
-  await expect(input).toHaveValue(stopName);
-}
-
+// Each test starts with a clean slate — no persisted stops
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
-  // Each test starts with a clean slate — no persisted stops
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
+  await gotoClean(page);
 });
 
 test("backend is reachable and healthy", async ({ request }) => {
@@ -37,12 +28,9 @@ test("plans a route from Guelph Central to Union Station", async ({ page }) => {
   // Early departure so the schedule always has trips left in the day
   await page.getByLabel("Departure time").fill("06:00");
 
-  const submit = page.getByRole("button", { name: "Find routes" });
-  await expect(submit).toBeEnabled();
-  await submit.click();
-
+  await expect(page.getByRole("button", { name: "Find routes" })).toBeEnabled();
   // Route scoring against the real graph can take a while on cold cache
-  await expect(page.getByText(/route(s)? found/i)).toBeVisible({ timeout: 60_000 });
+  await findRoutes(page);
 
   // At least one card with a risk badge and a duration
   const firstCard = page.getByRole("button", { name: /#1/ });
@@ -61,11 +49,13 @@ test("plans a route from Guelph Central to Union Station", async ({ page }) => {
 });
 
 test("selecting a different route moves the selection highlight", async ({ page }) => {
-  await selectStop(page, "Origin", "Guelph Central", "Guelph Central GO");
+  // Oakville rather than Guelph: Guelph Central to Union yields exactly one
+  // route at every time of day, so this test skipped itself and the selection
+  // behaviour was never actually exercised
+  await selectStop(page, "Origin", "Oakville", "Oakville GO");
   await selectStop(page, "Destination", "Union Station", "Union Station GO");
   await page.getByLabel("Departure time").fill("06:00");
-  await page.getByRole("button", { name: "Find routes" }).click();
-  await expect(page.getByText(/route(s)? found/i)).toBeVisible({ timeout: 60_000 });
+  await findRoutes(page);
 
   const cards = page.getByRole("button", { name: /#\d/ });
   const count = await cards.count();
@@ -104,7 +94,5 @@ test("shows the empty state when the date is beyond the schedule window", async 
   future.setFullYear(future.getFullYear() + 1);
   await page.getByLabel("Date").fill(future.toISOString().slice(0, 10));
   await page.getByLabel("Departure time").fill("09:00");
-  await page.getByRole("button", { name: "Find routes" }).click();
-
-  await expect(page.getByText(/No routes found/i)).toBeVisible({ timeout: 60_000 });
+  await findNoRoutes(page);
 });
