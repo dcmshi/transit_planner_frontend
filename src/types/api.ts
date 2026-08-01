@@ -47,6 +47,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reliability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Reliability
+         * @description Inspect the stored reliability counters behind a route's risk score.
+         *
+         *     Read-only, for tuning and debugging: /health reports only aggregate
+         *     counts by source, which is not enough to tell whether a route scores
+         *     badly because of real observations or a synthetic prior.
+         *
+         *     At least one of route_id or stop_id is required, and results are capped.
+         *     This is a lookup tool, not a bulk export — pull the table directly if you
+         *     need the whole thing.
+         */
+        get: operations["get_reliability_reliability_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/alerts": {
         parameters: {
             query?: never;
@@ -152,7 +180,8 @@ export interface paths {
          *
          *     Uses synthetic per-bucket reliability priors (no GTFS-RT required).
          *     Safe to call repeatedly — existing records are overwritten.
-         *     Run this once after /ingest/gtfs-static to populate baseline risk scores.
+         *     POST /ingest/gtfs-static already reseeds; call this only to re-seed
+         *     with a different window_days sample.
          */
         post: operations["trigger_reliability_seed_ingest_reliability_seed_post"];
         delete?: never;
@@ -275,6 +304,35 @@ export interface components {
             /** Is Cancelled */
             is_cancelled: boolean;
         };
+        /** ReliabilityResult */
+        ReliabilityResult: {
+            /** Route Id */
+            route_id: string | null;
+            /** Stop Id */
+            stop_id: string | null;
+            /** Time Bucket */
+            time_bucket: string | null;
+            /** Source */
+            source: string;
+            /** Scheduled Departures */
+            scheduled_departures: number;
+            /** Observed Departures */
+            observed_departures: number;
+            /** Total Delay Seconds */
+            total_delay_seconds: number;
+            /** Cancellation Count */
+            cancellation_count: number;
+            /** Window Start Date */
+            window_start_date: string | null;
+            /** Window End Date */
+            window_end_date: string | null;
+            /** Updated At */
+            updated_at: string | null;
+            /** Score */
+            score: number | null;
+            /** Neutral Prior Used */
+            neutral_prior_used: boolean;
+        };
         /** ReliabilityStats */
         ReliabilityStats: {
             /** Records */
@@ -351,6 +409,14 @@ export interface components {
             from_stop_name: string;
             /** To Stop Name */
             to_stop_name: string;
+            /** From Lat */
+            from_lat?: number | null;
+            /** From Lon */
+            from_lon?: number | null;
+            /** To Lat */
+            to_lat?: number | null;
+            /** To Lon */
+            to_lon?: number | null;
             /** Trip Id */
             trip_id: string;
             /** Route Id */
@@ -363,6 +429,8 @@ export interface components {
             arrival_time: string;
             /** Travel Seconds */
             travel_seconds: number;
+            /** Geometry */
+            geometry?: number[][] | null;
             risk: components["schemas"]["LiveRisk"] | null;
             /** Live Delay Seconds */
             live_delay_seconds?: number | null;
@@ -399,6 +467,14 @@ export interface components {
             from_stop_name: string;
             /** To Stop Name */
             to_stop_name: string;
+            /** From Lat */
+            from_lat?: number | null;
+            /** From Lon */
+            from_lon?: number | null;
+            /** To Lat */
+            to_lat?: number | null;
+            /** To Lon */
+            to_lon?: number | null;
             /** Distance M */
             distance_m: number;
             /** Walk Seconds */
@@ -465,6 +541,44 @@ export interface operations {
             };
         };
     };
+    get_reliability_reliability_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by GTFS route_id */
+                route_id?: string | null;
+                /** @description Filter by GTFS stop_id */
+                stop_id?: string | null;
+                /** @description Filter by bucket, e.g. weekday_am_peak / weekday_pm_peak / weekday_offpeak / weekend */
+                time_bucket?: string | null;
+                /** @description Max records */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReliabilityResult"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_alerts_alerts_get: {
         parameters: {
             query?: never;
@@ -496,6 +610,8 @@ export interface operations {
                 departure_time?: string | null;
                 /** @description Travel date as YYYY-MM-DD. Defaults to today. */
                 travel_date?: string | null;
+                /** @description Latest acceptable arrival as HH:MM or HH:MM:SS, returning the latest-departing options that still make it. GTFS convention applies, so 25:30 means 01:30 the next morning. Cannot be combined with departure_time. */
+                arrive_by?: string | null;
                 /** @description Include LLM plain-language explanation */
                 explain?: boolean;
             };
