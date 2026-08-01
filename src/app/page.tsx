@@ -9,10 +9,13 @@ import { useRoutes } from "@/hooks/useRoutes";
 import { useSavedStops } from "@/hooks/useSavedStops";
 import { routeKeys } from "@/lib/routeKey";
 import { describeApiError } from "@/lib/apiError";
+import { MapPlaceholder } from "@/components/MapFrame";
 
 const RouteMap = dynamic(
   () => import("@/components/RouteMap").then((m) => m.RouteMap),
-  { ssr: false }
+  // Without a sized fallback the map's column has zero height until the
+  // chunk lands, and everything below it jumps when it does
+  { ssr: false, loading: MapPlaceholder }
 );
 
 export default function Home() {

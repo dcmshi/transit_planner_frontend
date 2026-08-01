@@ -7,6 +7,7 @@ import type { ScoredRoute, StopResult } from "@/lib/api";
 import { stopBounds } from "@/lib/mapBounds";
 import { useRoutePolyline } from "@/hooks/useRoutePolyline";
 import { routeSummary } from "@/lib/routeSummary";
+import { MAP_FRAME_CLASS } from "./MapFrame";
 
 interface Props {
   origin: StopResult | null;
@@ -133,7 +134,7 @@ export function RouteMap({ origin, destination, selectedRoute }: Props) {
         data-testid="route-map"
         role="region"
         aria-label="Route map"
-        className="relative h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm sm:h-96 lg:h-[480px]"
+        className={MAP_FRAME_CLASS}
       >
         {/* The canvas conveys the route visually only */}
         <p className="sr-only">
