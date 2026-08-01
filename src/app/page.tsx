@@ -50,6 +50,18 @@ export default function Home() {
           </p>
         )}
 
+        {!query && !isFetching && (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 px-6 py-10 text-center">
+            <p className="text-sm font-medium text-gray-600">
+              Pick two GO stations to see reliability-scored routes.
+            </p>
+            <p className="mt-1 text-xs text-gray-400">
+              Every leg is scored against historical and live service data, so
+              the fastest option isn&apos;t always the one we recommend.
+            </p>
+          </div>
+        )}
+
         {isFetching && !data && <LoadingRoutes />}
         {data && (
           <RouteList

@@ -71,6 +71,21 @@ describe("Home page", () => {
     expect(screen.getByRole("button", { name: /find routes/i })).toBeDisabled();
   });
 
+  it("shows an onboarding hint before the first search", () => {
+    render(<Home />);
+    expect(screen.getByText(/pick two GO stations/i)).toBeInTheDocument();
+  });
+
+  it("replaces the onboarding hint once a search has been submitted", async () => {
+    localStorage.setItem("go-transit-last-stops", JSON.stringify({ origin, destination }));
+    render(<Home />);
+    await screen.findByDisplayValue("Guelph Central Station");
+
+    fireEvent.submit(screen.getByRole("button", { name: /find routes/i }).closest("form")!);
+
+    expect(screen.queryByText(/pick two GO stations/i)).not.toBeInTheDocument();
+  });
+
   it("resets the route selection to the first route when a new query is submitted", async () => {
     localStorage.setItem("go-transit-last-stops", JSON.stringify({ origin, destination }));
     const makeRoute = () => ({
