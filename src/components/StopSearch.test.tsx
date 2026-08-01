@@ -93,6 +93,24 @@ describe("StopSearch", () => {
     expect(input).toHaveValue("Guelph Central Stationx");
   });
 
+  it("wipes the input when the parent clears the selection", () => {
+    // A swap hands one field a null value while its text still shows the old
+    // stop — that text has to go, or the field displays an unselected stop
+    const { rerender } = render(<StopSearch label="Origin" value={fakeStop} onChange={() => {}} />);
+    expect(screen.getByRole("combobox")).toHaveValue("Guelph Central Station");
+
+    rerender(<StopSearch label="Origin" value={null} onChange={() => {}} />);
+    expect(screen.getByRole("combobox")).toHaveValue("");
+  });
+
+  it("keeps typed text when the parent clears in response to that typing", () => {
+    const { rerender } = render(<StopSearch label="Origin" value={fakeStop} onChange={() => {}} />);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Guelph Cent" } });
+
+    rerender(<StopSearch label="Origin" value={null} onChange={() => {}} />);
+    expect(screen.getByRole("combobox")).toHaveValue("Guelph Cent");
+  });
+
   it("associates the label with the input", () => {
     render(<StopSearch label="Origin" value={null} onChange={() => {}} />);
     expect(screen.getByLabelText("Origin")).toBe(screen.getByRole("combobox"));

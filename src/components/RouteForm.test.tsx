@@ -46,6 +46,7 @@ function Harness({
       destination={destination}
       onOriginChange={(s) => { setOrigin(s); onStopsChange(s, destination); }}
       onDestinationChange={(s) => { setDestination(s); onStopsChange(origin, s); }}
+      onSwap={() => { setOrigin(destination); setDestination(origin); }}
     />
   );
 }
@@ -98,12 +99,12 @@ describe("RouteForm", () => {
     // Regression: persisted stops load from localStorage after hydration —
     // the form must reflect prop updates, not just mount-time values
     const { rerender } = render(
-      <RouteForm onSubmit={() => {}} origin={null} destination={null} onOriginChange={() => {}} onDestinationChange={() => {}} />
+      <RouteForm onSubmit={() => {}} origin={null} destination={null} onOriginChange={() => {}} onDestinationChange={() => {}} onSwap={() => {}} />
     );
     expect(screen.getByRole("button", { name: /find routes/i })).toBeDisabled();
 
     rerender(
-      <RouteForm onSubmit={() => {}} origin={fakeStop} destination={fakeStop2} onOriginChange={() => {}} onDestinationChange={() => {}} />
+      <RouteForm onSubmit={() => {}} origin={fakeStop} destination={fakeStop2} onOriginChange={() => {}} onDestinationChange={() => {}} onSwap={() => {}} />
     );
     expect(screen.getByDisplayValue("Guelph Central Station")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Toronto Union Station")).toBeInTheDocument();
@@ -178,6 +179,35 @@ describe("RouteForm", () => {
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(/choose a departure time/i);
+  });
+
+  it("disables the swap button while both stops are empty", () => {
+    render(<Harness />);
+    expect(screen.getByRole("button", { name: /swap origin and destination/i })).toBeDisabled();
+  });
+
+  it("swaps the two stops when the swap button is clicked", () => {
+    render(<Harness initialOrigin={fakeStop} initialDestination={fakeStop2} />);
+    const [originInput, destInput] = screen.getAllByRole("combobox");
+    expect(originInput).toHaveValue("Guelph Central Station");
+    expect(destInput).toHaveValue("Toronto Union Station");
+
+    fireEvent.click(screen.getByRole("button", { name: /swap origin and destination/i }));
+
+    expect(originInput).toHaveValue("Toronto Union Station");
+    expect(destInput).toHaveValue("Guelph Central Station");
+  });
+
+  it("clears the vacated input when only one stop is swapped", () => {
+    // The parent clearing a stop must wipe its text, or the input keeps
+    // showing a stop that is no longer selected and submit stays disabled
+    render(<Harness initialOrigin={fakeStop} />);
+    const [originInput, destInput] = screen.getAllByRole("combobox");
+
+    fireEvent.click(screen.getByRole("button", { name: /swap origin and destination/i }));
+
+    expect(originInput).toHaveValue("");
+    expect(destInput).toHaveValue("Guelph Central Station");
   });
 
   it("puts no min on the departure time input", () => {

@@ -42,6 +42,7 @@ export default function Home() {
           destination={stops.destination}
           onOriginChange={(origin) => setStops({ ...stops, origin })}
           onDestinationChange={(destination) => setStops({ ...stops, destination })}
+          onSwap={() => setStops({ origin: stops.destination, destination: stops.origin })}
         />
 
         {isError && (

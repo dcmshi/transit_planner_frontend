@@ -30,9 +30,11 @@ interface Props {
   destination: StopResult | null;
   onOriginChange: (stop: StopResult | null) => void;
   onDestinationChange: (stop: StopResult | null) => void;
+  /** Exchanges the two stops. Owned by the parent so both land in one update. */
+  onSwap: () => void;
 }
 
-export function RouteForm({ onSubmit, isLoading = false, origin, destination, onOriginChange, onDestinationChange }: Props) {
+export function RouteForm({ onSubmit, isLoading = false, origin, destination, onOriginChange, onDestinationChange, onSwap }: Props) {
   const [date, setDate] = useState(todayDate());
   const [time, setTime] = useState(nowTime());
   const [explain, setExplain] = useState(false);
@@ -82,6 +84,22 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
           value={origin}
           onChange={onOriginChange}
         />
+        <div className="-my-2 flex justify-end">
+          <button
+            type="button"
+            onClick={onSwap}
+            disabled={!origin && !destination}
+            aria-label="Swap origin and destination"
+            className="rounded-md border border-gray-300 bg-white p-1.5 text-gray-500 shadow-sm hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <svg
+              className="h-4 w-4" aria-hidden="true"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+          </button>
+        </div>
         <StopSearch
           label="Destination"
           placeholder="Search destination stop…"

@@ -37,13 +37,17 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
 
   // Sync display value when the external value changes (render-phase
   // adjustment — https://react.dev/learn/you-might-not-need-an-effect).
-  // Only sync when a stop is set: a null value also arrives when the user
-  // edits the text below, and overwriting would wipe their typing.
+  // A null value arrives two ways: the parent cleared it (a swap), or the
+  // user edited the text below. Only the first should wipe the input, and
+  // the two are told apart by whether the text still matches the old stop.
   const [prevValue, setPrevValue] = useState(value);
   if (value !== prevValue) {
     setPrevValue(value);
     if (value) {
       setInputValue(value.stop_name);
+      setFocusedIndex(-1);
+    } else if (prevValue && inputValue === prevValue.stop_name) {
+      setInputValue("");
       setFocusedIndex(-1);
     }
   }
