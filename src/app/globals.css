@@ -4,6 +4,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --focus-ring: #15803d; /* green-700 — the brand accent */
 }
 
 @theme inline {
@@ -19,4 +20,12 @@ body {
   background: #f9fafb;
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* One focus treatment for the whole app. :where() keeps specificity at zero,
+   so a component can still opt out deliberately — but nothing should need to,
+   and no component should be setting focus:outline-none of its own. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }

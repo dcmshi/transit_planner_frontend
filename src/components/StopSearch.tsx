@@ -120,7 +120,7 @@ export function StopSearch({ label, placeholder = "Search stops…", value, onCh
           onFocus={() => inputValue.trim().length >= 2 && setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-green-600"
           aria-autocomplete="list"
           aria-expanded={showDropdown}
           aria-controls={listboxId}

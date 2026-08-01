@@ -125,7 +125,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
               value={date}
               min={todayDate()}
               onChange={(e) => { setDate(e.target.value); setFormError(null); }}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600"
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
@@ -147,7 +147,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
               type="time"
               value={time}
               onChange={(e) => { setTime(e.target.value); setFormError(null); }}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600"
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-green-600"
             />
           </div>
         </div>
@@ -162,7 +162,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
               type="checkbox"
               checked={explain}
               onChange={(e) => onExplainChange(e.target.checked)}
-              className="rounded border-gray-300 text-green-600 focus:ring-green-600"
+              className="rounded border-gray-300 text-green-600"
             />
             Include AI explanation
           </label>
@@ -170,7 +170,7 @@ export function RouteForm({ onSubmit, isLoading = false, origin, destination, on
           <button
             type="submit"
             disabled={!canSubmit}
-            className="rounded-md bg-green-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md bg-green-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isLoading ? "Searching…" : "Find routes"}
           </button>
