@@ -73,7 +73,7 @@ const route: ScoredRoute = {
       departure_time: "06:26:00",
       arrival_time: "07:47:00",
       travel_seconds: 4860,
-      risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false },
+      risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
     },
   ],
   total_travel_seconds: 4860,

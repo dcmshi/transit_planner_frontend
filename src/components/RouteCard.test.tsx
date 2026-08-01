@@ -37,7 +37,7 @@ const tripLeg: TripLeg = {
   departure_time: "09:00:00",
   arrival_time: "09:30:00",
   travel_seconds: 1800,
-  risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false },
+  risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
 };
 
 describe("RouteCard", () => {

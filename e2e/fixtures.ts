@@ -61,7 +61,7 @@ function tripLeg(from: typeof GUELPH, to: typeof GUELPH, departure: string, arri
       [(from.lon + to.lon) / 2, Math.max(from.lat, to.lat) + 0.02],
       [to.lon, to.lat],
     ],
-    risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false },
+    risk: { risk_score: 0.2, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
   };
 }
 

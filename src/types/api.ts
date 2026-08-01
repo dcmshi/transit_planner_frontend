@@ -303,6 +303,8 @@ export interface components {
             modifiers: string[];
             /** Is Cancelled */
             is_cancelled: boolean;
+            /** Time Bucket */
+            time_bucket: string;
         };
         /** ReliabilityResult */
         ReliabilityResult: {

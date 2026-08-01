@@ -37,7 +37,7 @@ function makeTripLeg(overrides: Partial<TripLeg> = {}): TripLeg {
     departure_time: "09:00:00",
     arrival_time: "09:30:00",
     travel_seconds: 1800,
-    risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false },
+    risk: { risk_score: 0.1, risk_label: "Low", modifiers: [], is_cancelled: false, time_bucket: "weekday_am_peak" },
     ...overrides,
   };
 }
@@ -169,7 +169,7 @@ describe("useRoutePolyline", () => {
 
   it("tags trip legs with their risk label and walk legs with null", () => {
     const route = makeRoute([
-      makeTripLeg({ risk: { risk_score: 0.9, risk_label: "High", modifiers: [], is_cancelled: false } }),
+      makeTripLeg({ risk: { risk_score: 0.9, risk_label: "High", modifiers: [], is_cancelled: false, time_bucket: "weekday_pm_peak" } }),
       makeWalkLeg(),
     ]);
     const { result } = renderHook(() => useRoutePolyline(route));
