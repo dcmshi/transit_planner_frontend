@@ -35,11 +35,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Regenerating API types
 
-Run this whenever the backend schema changes:
+`src/types/api.ts` is generated from the backend's OpenAPI schema — never edit
+it by hand. Run this whenever the backend schema changes, with the backend up:
 
 ```bash
-bunx openapi-typescript http://localhost:8000/openapi.json -o src/types/api.ts
+bun run types:generate
 ```
+
+The generator is pinned in `devDependencies`, so everyone regenerates with the
+same version. Point it elsewhere by editing the URL in the `types:generate`
+script.
 
 ## Environment variables
 
