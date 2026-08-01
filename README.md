@@ -81,7 +81,7 @@ The frontend dev server is started automatically (an already-running
 
 ### Unit tests
 
-149 tests across 22 files covering utility functions, hooks, and all major components:
+245 tests across 33 files covering utility functions, hooks, and all major components:
 
 | File | What it covers |
 |---|---|
@@ -89,24 +89,35 @@ The frontend dev server is started automatically (an already-running
 | `src/lib/explanation.test.ts` | `isExplanationAvailable`, `parseRecommendedIndex` |
 | `src/lib/groupLegs.test.ts` | consecutive same-trip leg merging |
 | `src/lib/api.test.ts` | 404 → empty routes mapping, explain flag, query encoding, timeout signal, `/alerts`, older-browser AbortSignal fallbacks |
-| `src/lib/routeKey.test.ts` | stable route identity, duplicate disambiguation, reorder stability |
+| `src/lib/routeKey.test.ts` | stable route identity, duplicate disambiguation, reorder stability, what the key deliberately ignores |
 | `src/lib/mapBounds.test.ts` | SW/NE corner ordering regardless of stop orientation |
-| `src/components/RiskBadge.test.tsx` | colour class per risk level |
+| `src/components/RiskBadge.test.tsx` | colour class per risk level, neutral fallback for unknown labels |
 | `src/components/ExplanationPanel.test.tsx` | available vs. Ollama-unavailable states |
 | `src/components/HealthBanner.test.tsx` | all 5 health/data states |
-| `src/components/AlertsBanner.test.tsx` | hidden / single-alert / multi-alert states |
-| `src/components/StopSearch.test.tsx` | dropdown threshold, keyboard nav, Escape/ArrowDown edge cases, unique ids, selection, clear |
-| `src/components/LoadingRoutes.test.tsx` | spinner and loading text |
-| `src/components/RouteForm.test.tsx` | render, submit gating, payload shape, explain flag, controlled stops, past-date validation |
-| `src/components/RouteList.test.tsx` | empty state, route count, explanation panel |
-| `src/components/RouteCard.test.tsx` | summary row, select vs. expand decoupling, `aria-expanded`, recommended flag |
+| `src/components/AlertsBanner.test.tsx` | hidden / single / multi-alert states, headline dedupe, expand and collapse |
+| `src/components/StopSearch.test.tsx` | dropdown threshold, keyboard nav, scroll-into-view, Escape/ArrowDown edge cases, unique ids, selection, parent-driven clear |
+| `src/components/LoadingRoutes.test.tsx` | spinner and loading text derived from the request timeout |
+| `src/components/RouteForm.test.tsx` | render, submit gating, payload shape, explain flag, swap, "Now" reset, controlled stops, past-date validation |
+| `src/components/RouteList.test.tsx` | empty state, route count, explanation panel and its pending state, header wrapping, expansion across a reorder |
+| `src/components/RouteCard.test.tsx` | summary row and depart/arrive times, select vs. expand decoupling, selection styling, route-id demotion, touch targets |
 | `src/components/ErrorBoundary.test.tsx` | fallback rendering and error logging |
-| `src/hooks/useRoutePolyline.test.ts` | GeoJSON output, coord resolution, missing-coord skip, pending sentinel, leg properties |
+| `src/hooks/useRoutePolyline.test.ts` | GeoJSON output, coord resolution, per-name query dedupe, missing-coord skip, pending sentinel, leg properties |
 | `src/hooks/useSavedStops.test.tsx` | load after hydration, StrictMode clobber regression, persistence, corrupt JSON |
 | `src/hooks/useStops.test.tsx` | 300 ms debounce, minimum query length |
 | `src/hooks/useHealth.test.ts` | poll interval per health state |
 | `src/hooks/useRoutes.test.tsx` | explanation fetched separately and excluded from background refetch |
-| `src/app/page.test.tsx` | persisted stops restored into form, submit wiring, selection reset |
+| `src/app/page.test.tsx` | persisted stops restored into form, submit wiring, selection reset and reorder survival, live explain toggle, error state and retry, mobile source order |
+| `src/app/providers.test.tsx` | devtools excluded outside development |
+| `src/app/globals.test.ts` | font variables applied, one shared focus treatment |
+| `src/app/routeFallbacks.test.tsx` | route-level loading, error and not-found pages |
+| `src/components/RouteMap.test.tsx` | responsive sizing, basemap failure fallback, screen-reader summary, polyline caption |
+| `src/components/MapFrame.test.tsx` | placeholder matches the loaded map's frame |
+| `src/components/icons.test.tsx` | icons are decorative and inherit colour |
+| `src/lib/routeName.test.ts` | line designation vs. opaque route id |
+| `src/lib/routeTimes.test.ts` | first departure to last arrival across leg kinds |
+| `src/lib/routeSummary.test.ts` | screen-reader description of a route |
+| `src/lib/apiError.test.ts` | timeout, 5xx, 4xx, unreachable and fallback messages |
+| `src/test/repo.test.ts` | README image links, generated-types script |
 
 ## Project structure
 
