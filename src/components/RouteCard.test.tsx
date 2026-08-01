@@ -127,6 +127,24 @@ describe("RouteCard", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it("headlines a line-like route id above the stop pair", () => {
+    render(<RouteCard route={makeRoute({ legs: [tripLeg] })} index={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+    const label = screen.getByText("Route 27");
+    expect(label.className).toContain("text-green-700");
+  });
+
+  it("demotes an opaque route id instead of headlining it", () => {
+    const opaque: TripLeg = { ...tripLeg, route_id: "06260926-GT" };
+    render(<RouteCard route={makeRoute({ legs: [opaque] })} index={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /route details/i }));
+
+    expect(screen.queryByText("Route 06260926-GT")).not.toBeInTheDocument();
+    const fallback = screen.getByText("Route ID 06260926-GT");
+    expect(fallback.className).toContain("text-gray-400");
+    expect(fallback.className).not.toContain("uppercase");
+  });
+
   it("shows live delay and expected times on a delayed trip leg", () => {
     const delayed: TripLeg = {
       ...tripLeg,
